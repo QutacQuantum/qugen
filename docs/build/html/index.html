@@ -1,0 +1,578 @@
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="">
+    
+    
+      
+        <title>qugen 0.1.0 documentation</title>
+      
+    
+    
+      
+        
+        
+          
+          
+          <meta name="theme-color" content="#4051b5">
+        
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.79d3faa9841bcddc6.min.css?v=e88de5f6" />
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="indigo" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="#" title="qugen 0.1.0 documentation" class="md-header__button md-logo" aria-label="qugen 0.1.0 documentation" data-md-component="logo">
+      <img src="_static/logo.jpeg" alt="logo">
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            qugen 0.1.0 documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Welcome to qugen’s documentation!
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="#" title="qugen 0.1.0 documentation" class="md-nav__button md-logo" aria-label="qugen 0.1.0 documentation" data-md-component="logo">
+      <img src="_static/logo.jpeg" alt="logo">
+    </a>
+    qugen 0.1.0 documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="readme_link.html" class="md-nav__link">
+        <span class="md-ellipsis">Installation</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="readme_link.html#instructions-for-training-and-running-models" class="md-nav__link">
+        <span class="md-ellipsis">Instructions for training and running models</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="readme_link.html#citation" class="md-nav__link">
+        <span class="md-ellipsis">Citation</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="readme_link.html#contact" class="md-nav__link">
+        <span class="md-ellipsis">Contact</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="base_model.html" class="md-nav__link">
+        <span class="md-ellipsis">Base Model Handler</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="discrete_qcbm.html" class="md-nav__link">
+        <span class="md-ellipsis">Discrete Quantum Born Circuit Machine <wbr>(QCBM)</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cont_qcbm.html" class="md-nav__link">
+        <span class="md-ellipsis">Continuous Quantum Born Circuit Machine <wbr>(QCBM)</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="discrete_qgan.html" class="md-nav__link">
+        <span class="md-ellipsis">Discrete Quantum Generative Adversarial Network <wbr>(QGAN)</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cont_qgan.html" class="md-nav__link">
+        <span class="md-ellipsis">Continuous Quantum Generative Adversarial Network  <wbr>(QGAN)</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="credit_license.html" class="md-nav__link">
+        <span class="md-ellipsis">Credit</span>
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="credit_license.html#license" class="md-nav__link">
+        <span class="md-ellipsis">License</span>
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#" class="md-nav__link">
+    <span class="md-ellipsis">Welcome to qugen’s documentation!</span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Welcome to qugen’s documentation!">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contents" class="md-nav__link">
+    <span class="md-ellipsis">Contents</span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indices-and-tables" class="md-nav__link">
+    <span class="md-ellipsis">Indices and tables</span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset" role="main">
+                  
+
+
+<h1 id="welcome-to-qugen-s-documentation">Welcome to qugen’s documentation!<a class="headerlink" href="#welcome-to-qugen-s-documentation" title="Link to this heading">¶</a></h1>
+<p>qugen is a module for creating and training quantum generative machine learning models on simulated quantum hardware. It is implemented using pennylane with jax acceleration.</p>
+<p>This module accompanies the publication  <a class="reference external" href="https://arxiv.org/abs/2301.09363">A characterization of quantum generative models</a> , which gives a background on these models as well as describing in detail their structure and performance.
+The results given in this paper can be replicated with the code shared here. The authors hope it may also be of interest to the quantum machine learning community as an example of how such models can be implimented.</p>
+<p>We have implemented 2 different types of variational quantum ciruits:</p>
+<p><strong>Discrete</strong>: in which each measurement of the output of the circuit is interpreted directly as a discrete bit string.</p>
+<p><strong>Continuous</strong>: in which the outputs are expectation values which are interpreted as continuous valued samples
+Together with these circuits, we have also implemented 2 different training methods:</p>
+<p><strong>QCBM</strong>: in which a histogram of the distribution of the training data is learned directly by the variational quantum circuit.
+<strong>QGAN</strong>: in which samples of the data and generated data are passed to a classical discriminator neural network that judges the validity of the samples.</p>
+<p>There are 8 training data sets, 4 2D and 4 3D each:  a circle, a cross, a mixed Gaussian data set and stocks data.
+The package allows models to be created, trained and evaluated.</p>
+<h2 id="contents">Contents<a class="headerlink" href="#contents" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme_link.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme_link.html#instructions-for-training-and-running-models">Instructions for training and running models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme_link.html#citation">Citation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme_link.html#contact">Contact</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base_model.html">Base Model Handler</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="base_model.html#qugen.main.generator.base_model_handler.BaseModelHandler">qugen.main.generator.base_model_handler.BaseModelHandler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="base_model.html#qugen.main.generator.base_model_handler.BaseModelHandler.build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="base_model.html#qugen.main.generator.base_model_handler.BaseModelHandler.predict">predict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="base_model.html#qugen.main.generator.base_model_handler.BaseModelHandler.reload">reload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="base_model.html#qugen.main.generator.base_model_handler.BaseModelHandler.save">save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="base_model.html#qugen.main.generator.base_model_handler.BaseModelHandler.train">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_qcbm.html">Discrete Quantum Born Circuit Machine (QCBM)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler">qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.evaluator">evaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.plot_training_data">plot_training_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.predict">predict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.predict_transform">predict_transform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.reload">reload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.save">save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qcbm.html#qugen.main.generator.discrete_qcbm_model_handler.DiscreteQCBMModelHandler.train">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cont_qcbm.html">Continuous Quantum Born Circuit Machine (QCBM)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler">qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.predict">predict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.predict_transform">predict_transform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.reload">reload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.sample">sample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.save">save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qcbm.html#qugen.main.generator.continuous_qcbm_model_handler.ContinuousQCBMModelHandler.train">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_qgan.html">Discrete Quantum Generative Adversarial Network (QGAN)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler">qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler.build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler.predict">predict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler.predict_transform">predict_transform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler.reload">reload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler.save">save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_qgan.html#qugen.main.generator.discrete_qgan_model_handler.DiscreteQGANModelHandler.train">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cont_qgan.html">Continuous Quantum Generative Adversarial Network  (QGAN)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler">qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.predict">predict</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.predict_transform">predict_transform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.reload">reload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.sample">sample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.save">save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cont_qgan.html#qugen.main.generator.continuous_qgan_model_handler.ContinuousQGANModelHandler.train">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="credit_license.html">Credit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="credit_license.html#license">License</a></li>
+</ul>
+</div>
+<h1 id="indices-and-tables">Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+      
+        
+        <a href="readme_link.html" class="md-footer__link md-footer__link--next" aria-label="Next: Installation" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Installation
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  
+  
+  <div class="md-footer-meta md-typeset">
+    
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-footer-copyright__highlight">
+        &#169; Copyright 2023 QUTAC, BASF Digital Solutions GmbH, BMW Group, Lufthansa Industry Solutions AS GmbH, Merck KGaA (Darmstadt, Germany), Munich Re, SAP SE..
+        
+    </div>
+  
+    Created using
+    <a href="https://www.sphinx-doc.org/" target="_blank" rel="noopener">Sphinx</a>
+    7.2.6.
+     and
+    <a href="https://github.com/jbms/sphinx-immaterial/" target="_blank" rel="noopener">Sphinx-Immaterial</a>
+  
+</div>
+      
+    </div>
+    
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+      
+        <script src="_static/sphinx_immaterial_theme.1b5b7a2d5891aec19.min.js?v=1e7b0789"></script>
+    
+  </body>
+</html>

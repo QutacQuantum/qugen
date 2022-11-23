@@ -1,0 +1,6 @@
+build/*
+!qugen/docs/build
+*.pyc
+*egg-info
+.idea/
+.vscode/
