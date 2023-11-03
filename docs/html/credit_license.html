@@ -13,7 +13,7 @@
     
     
       
-        <title>Installation - qugen 0.1.0 documentation</title>
+        <title>Credit - qugen 0.1.0 documentation</title>
       
     
     
@@ -36,7 +36,7 @@
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.79d3faa9841bcddc6.min.css?v=e88de5f6" />
+        <link rel="stylesheet" type="text/css" href="_static/sphinx_immaterial_theme.af531f03affe68837.min.css?v=2410bb73" />
     <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -87,7 +87,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Credit
             
           </span>
         </div>
@@ -170,20 +170,12 @@
 
   
   
-    
-  
-    
   
   
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      <a href="#" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="readme_link.html" class="md-nav__link">
         <span class="md-ellipsis">Installation</span>
       </a>
-      
     </li>
   
 
@@ -194,20 +186,12 @@
 
   
   
-    
-  
-    
   
   
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      <a href="#instructions-for-training-and-running-models" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="readme_link.html#instructions-for-training-and-running-models" class="md-nav__link">
         <span class="md-ellipsis">Instructions for training and running models</span>
       </a>
-      
     </li>
   
 
@@ -218,20 +202,12 @@
 
   
   
-    
-  
-    
   
   
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      <a href="#citation" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="readme_link.html#citation" class="md-nav__link">
         <span class="md-ellipsis">Citation</span>
       </a>
-      
     </li>
   
 
@@ -242,20 +218,12 @@
 
   
   
-    
-  
-    
   
   
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      <a href="#contact" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="readme_link.html#contact" class="md-nav__link">
         <span class="md-ellipsis">Contact</span>
       </a>
-      
     </li>
   
 
@@ -346,12 +314,20 @@
 
   
   
+    
+  
+    
   
   
-    <li class="md-nav__item">
-      <a href="credit_license.html" class="md-nav__link">
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      <a href="#" class="md-nav__link md-nav__link--active">
         <span class="md-ellipsis">Credit</span>
       </a>
+      
     </li>
   
 
@@ -362,12 +338,20 @@
 
   
   
+    
+  
+    
   
   
-    <li class="md-nav__item">
-      <a href="credit_license.html#license" class="md-nav__link">
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      <a href="#license" class="md-nav__link md-nav__link--active">
         <span class="md-ellipsis">License</span>
       </a>
+      
     </li>
   
 
@@ -401,70 +385,86 @@
                   
 
 
-<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
-<ol class="arabic simple">
-<li><p>Create a virtual environment, e.g. using <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">create</span> <span class="pre">--name</span> <span class="pre">qugen_env</span> <span class="pre">python=3.9.12</span></code>. Python 3.9 or later is supported.</p></li>
-<li><p>Activate the enviroment, e.g <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">activate</span> <span class="pre">qugen_env</span></code>.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code> to install it in editable mode.</p></li>
-</ol>
-<h1 id="instructions-for-training-and-running-models">Instructions for training and running models<a class="headerlink" href="#instructions-for-training-and-running-models" title="Link to this heading">¶</a></h1>
-<p>Each model type has an example script to create and train a model found  at ‘’apps/logistics/train_xyz.py’’ file, e.g. ‘’apps/logistics/train_continuous_qgan.py’’</p>
-<p>The training data, data transformation and other hyperparameters can all specified in these training scripts.</p>
-<p>Each model type also has a model handler, they are found in qugen/main/generator and are imported by each training script as needed.</p>
-<p>The model handlers contain four important methods, shown in the table below.</p>
-<table class="docutils data align-default">
+<h1 id="credit">Credit<a class="headerlink" href="#credit" title="Link to this heading">¶</a></h1>
+<blockquote>
+<div><p>This project was developed within the <a class="reference external" href="https://www.qutac.de/">Quantum Technology &amp; Application Consortium (QUTAC)</a></p>
+</div></blockquote>
+<a class="reference internal image-reference" href="_images/qutac_logo.jpeg"><img alt="QUTAC Logo" class="align-center" src="_images/qutac_logo.jpeg" style="width: 400px;" /></a>
+<p>The core contributers to the project are:</p>
+<blockquote>
+<div><blockquote>
+<div><table class="docutils data align-default">
+<colgroup>
+<col style="width: 33.3%" />
+<col style="width: 66.7%" />
+</colgroup>
 <thead>
-<tr class="row-odd"><th class="head"><p>Method</p></th>
-<th class="head"><p>Description</p></th>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Company</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>build</p></td>
-<td><p>Builds a model by specifying its hyperparameters.</p></td>
+<tr class="row-even"><td><p>Aleksandar Vučković</p></td>
+<td><p>Merck KGaA (Darmstadt, Germany)</p></td>
 </tr>
-<tr class="row-odd"><td><p>train</p></td>
-<td><p>Trains a model using a training data set.</p></td>
+<tr class="row-odd"><td><p>Oliver Mitevski</p></td>
+<td><p>Munich Re</p></td>
 </tr>
-<tr class="row-even"><td><p>predict</p></td>
-<td><p>Samples from a trained model.</p></td>
+<tr class="row-even"><td><p>Carlos A. Riofrío</p></td>
+<td><p>BMW Group</p></td>
 </tr>
-<tr class="row-odd"><td><p>reload</p></td>
-<td><p>Reloads a trained model from file.</p></td>
+<tr class="row-odd"><td><p>Caitlin Jones</p></td>
+<td><p>BASF Digital Solutions GmbH</p></td>
+</tr>
+<tr class="row-even"><td><p>Florian Krellner</p></td>
+<td><p>SAP SE</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pallavi Bhardwaj</p></td>
+<td><p>SAP SE</p></td>
 </tr>
 </tbody>
 </table>
-<p>To train a model, the training scripts work as follows:</p>
-<ul class="simple">
-<li><p>Each train file loads an input training data set from file (found in training_data/) and creates the appropriate model handler.</p></li>
-<li><p>The model handler builds a model from the specified parameters: model_name, data_set_name, n_qubits, n_registers, circuit_depth, n_epochs etc.</p></li>
-<li><p>A meta json file of the model is saved to experiments/modelname.</p></li>
-<li><p>The built model is then trained using the training data set.</p></li>
-<li><p>During training, at each epoch, the  weights and a log file (containing the KL divergence) are saved to experiments/modelname.</p></li>
-</ul>
-<p>To load a model from file (see train_discrete_copula_qcbm for example):</p>
-<ul class="simple">
-<li><p>Create an instance of the appropriate model handler (e.g. <code class="docutils literal notranslate"><span class="pre">model</span> <span class="pre">=</span> <span class="pre">ContinuousQGANModelHandler()</span></code>).</p></li>
-<li><p>Load the model using the reload functions and the meta json and your chosen parameters file.</p></li>
-</ul>
-<p>To sample from a trained model (see train_discrete_copula_qcbm for example):</p>
-<ul class="simple">
-<li><p>Use the model.predict method, which takes as an argument the number of samples to be generated.</p></li>
-</ul>
-<p>To evaluate a trained model:</p>
-<ul class="simple">
-<li><p>Use the evaluator method which takes all the weights from the training run of the model and finds the set of weights with the lowest cost function (KL divergence)</p></li>
-</ul>
-<h1 id="citation">Citation<a class="headerlink" href="#citation" title="Link to this heading">¶</a></h1>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span class="nd">@article</span><span class="p">{</span><span class="n">riofrio2023performance</span><span class="p">,</span>
-  <span class="n">title</span><span class="o">=</span><span class="p">{</span><span class="n">A</span> <span class="n">performance</span> <span class="n">characterization</span> <span class="n">of</span> <span class="n">quantum</span> <span class="n">generative</span> <span class="n">models</span><span class="p">},</span>
-  <span class="n">author</span><span class="o">=</span><span class="p">{</span><span class="n">Riofr</span><span class="p">{</span>\<span class="s1">&#39;\i}o, Carlos A and Mitevski, Oliver and Jones, Caitlin and Krellner, Florian and Vu{</span><span class="se">\v</span><span class="si">{c}</span><span class="s1">}kovi{</span><span class="se">\&#39;</span><span class="s1">c}, Aleksandar and Doetsch, Joseph and Klepsch, Johannes and Ehmer, Thomas and Luckow, Andre},</span>
-  <span class="n">journal</span><span class="o">=</span><span class="p">{</span><span class="n">arXiv</span> <span class="n">preprint</span> <span class="n">arXiv</span><span class="p">:</span><span class="mf">2301.09363</span><span class="p">},</span>
-  <span class="n">year</span><span class="o">=</span><span class="p">{</span><span class="mi">2023</span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-</div>
-<h1 id="contact">Contact<a class="headerlink" href="#contact" title="Link to this heading">¶</a></h1>
-<p><a class="reference external" href="mailto:info&#37;&#52;&#48;qutac&#46;de">info<span>&#64;</span>qutac<span>&#46;</span>de</a></p>
+</div></blockquote>
+<p>Other contributers to this project are:</p>
+<table class="docutils data align-default">
+<colgroup>
+<col style="width: 33.3%" />
+<col style="width: 66.7%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Company</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Joseph Doetsch</p></td>
+<td><p>Lufthansa Industry Solutions AS GmbH</p></td>
+</tr>
+<tr class="row-odd"><td><p>Johannes Klepsch</p></td>
+<td><p>BMW Group</p></td>
+</tr>
+<tr class="row-even"><td><p>Thomas Ehmer</p></td>
+<td><p>Merck KGaA (Darmstadt, Germany)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Andre Luckow</p></td>
+<td><p>BMW Group</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<h1 id="license">License<a class="headerlink" href="#license" title="Link to this heading">¶</a></h1>
+<p>Copyright 2023 QUTAC, BASF Digital Solutions GmbH, BMW Group,
+Lufthansa Industry Solutions AS GmbH, Merck KGaA (Darmstadt, Germany),
+Munich Re, SAP SE.</p>
+<p>Licensed under the Apache License, Version 2.0 (the “License”);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<p>    <a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an “AS IS” BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
 
 
 
@@ -486,7 +486,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="index.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Welcome to qugen’s documentation!" rel="prev">
+        <a href="cont_qgan.html" class="md-footer__link md-footer__link--prev" aria-label="Previous: Continuous Quantum Generative Adversarial Network (QGAN)" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -495,26 +495,11 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              Welcome to qugen’s documentation!
+              Continuous Quantum Generative Adversarial Network (QGAN)
             </div>
           </div>
         </a>
       
-      
-        
-        <a href="base_model.html" class="md-footer__link md-footer__link--next" aria-label="Next: Base Model Handler" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Base Model Handler
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
-        </a>
       
     </nav>
   
