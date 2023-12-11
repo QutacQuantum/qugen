@@ -71,6 +71,7 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         transformation: str = "pit",
         save_artifacts=True,
         slower_progress_update=False,
+        true_name=False
     ) -> BaseModelHandler:
         """Build the continuous qgan model.
         This defines the architecture of the model, including the circuit ansatz, data transformation and whether the artifacts are saved.
@@ -101,8 +102,11 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         self.data_set = data_set
 
         circuit_type = "continuous"
-        self.model_name = f"{model_name}_{self.data_set}_{self.transformation}_qgan_{uniq}"
-        print(f"{self.model_name=}")
+        if true_name:
+            self.model_name = model_name
+        else:
+            self.model_name = f"{model_name}_{self.data_set}_{self.transformation}_qgan_{uniq}"
+        # print(f"{self.model_name=}")
         self.path_to_models = "experiments/" + self.model_name
 
         self.metadata = dict(
@@ -111,6 +115,7 @@ class ContinuousQGANModelHandler(BaseModelHandler):
                 "data_set": self.data_set,
                 "n_qubits": self.n_qubits,
                 "circuit_type": circuit_type,
+                "model_type": "QGAN",
                 "circuit_depth": self.circuit_depth,
                 "transformation": self.transformation,
                 "discriminator": "digital",
@@ -146,7 +151,7 @@ class ContinuousQGANModelHandler(BaseModelHandler):
                 pickle.dump((self.generator_weights, self.discriminator_weights), file)
         return self
 
-    def reload(self, model_name: str, epoch: int) -> BaseModelHandler:
+    def reload(self, model_name: str, epoch: int, save_artifacts=True) -> BaseModelHandler:
         """Reload the model from the artifacts including the parameters for the generator and the discriminator,
         the metadata and the data transformation file (reverse lookup table or original min and max of the training data).
 
@@ -161,18 +166,21 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         meta_file = "experiments/"+ model_name + "/" +  "meta.json"
         reverse_file = "experiments/" + model_name + "/" + 'reverse_lookup.npy'
 
-        with open(weights_file, "rb") as file:
-            self.generator_weights, self.discriminator_weights = pickle.load(file)
+        if epoch > 0:
+            with open(weights_file, "rb") as file:
+                self.generator_weights, self.discriminator_weights = pickle.load(file)
         with open(meta_file, "r") as file:
             self.metadata = json.load(file)
 
-        self.reverse_lookup = jnp.load(reverse_file)
+        if epoch > 0:
+            self.reverse_lookup = jnp.load(reverse_file)
         self.n_qubits = self.metadata["n_qubits"]
         self.transformation = self.metadata["transformation"]
         self.circuit_depth = self.metadata["circuit_depth"]
         self.performed_trainings = len(self.metadata["training_data"])
         self.random_key = jax.random.PRNGKey(2)
         self.path_to_models =  "experiments/" + self.metadata["model_name"]
+        self.save_artifacts = save_artifacts
 
         if self.normalizer is None:
             if self.transformation == "minmax":
@@ -181,7 +189,8 @@ class ContinuousQGANModelHandler(BaseModelHandler):
                 self.normalizer = PITNormalizer()
             else:
                 raise ValueError("Transformation value must be either 'minmax' or 'pit'")
-        self.normalizer.reverse_lookup = self.reverse_lookup
+        if epoch > 0:
+            self.normalizer.reverse_lookup = self.reverse_lookup
         if self.generator is None:
             self.generator, self.num_params = get_qnode(self.circuit_depth, self.n_qubits)
         return self

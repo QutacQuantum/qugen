@@ -81,6 +81,7 @@ class DiscreteQGANModelHandler(BaseModelHandler):
         circuit_type="copula",
         save_artifacts=True,
         slower_progress_update=False,
+        true_name=False
     ) -> BaseModelHandler:
         """Build the discrete QGAN model.
         This defines the architecture of the model, including the circuit ansatz, data transformation and whether the artifacts are saved.
@@ -114,7 +115,10 @@ class DiscreteQGANModelHandler(BaseModelHandler):
         time_str = str(time.time()).encode('utf-8')
         uniq = hashlib.md5(time_str).hexdigest()[:4]
 
-        self.model_name = model_name + '_' + self.data_set_name + '_' + self.circuit_type + '_' + self.transformation+ '_' + 'qgan_' + uniq
+        if true_name:
+            self.model_name = model_name
+        else:
+            self.model_name = model_name + '_' + self.data_set_name + '_' + self.circuit_type + '_' + self.transformation+ '_' + 'qgan_' + uniq
 
         self.device = 'cpu'
         self.beta_1 = 0.5
@@ -129,6 +133,7 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             'n_qubits': self.n_qubits,
             'n_registers': self.n_registers,
             'circuit_type': self.circuit_type,
+            'model_type': 'QGAN',
             'circuit_depth': self.circuit_depth,
             'transformation': self.transformation,
             'data_set ': self.data_set_name,
@@ -204,7 +209,7 @@ class DiscreteQGANModelHandler(BaseModelHandler):
 
 
     def reload(
-        self, model_name: str, epoch: int, random_seed: Optional[int] = None
+        self, model_name: str, epoch: int, save_artifacts=True, random_seed: Optional[int] = None, 
     ) -> BaseModelHandler:
         """Reload the model from the artifacts including the parameters for the generator and the discriminator,
         the metadata and the data transformation file (reverse lookup table or original min and max of the training data).
@@ -223,11 +228,12 @@ class DiscreteQGANModelHandler(BaseModelHandler):
         meta_file = "experiments/"+ model_name + "/" + "meta.json"
         reverse_file = "experiments/" + model_name + "/" + 'reverse_lookup.npy'
 
-        with open(weights_file, "rb") as file:
-            self.generator_weights, self.discriminator_weights = pickle.load(file)
+        if epoch > 0:
+            with open(weights_file, "rb") as file:
+                self.generator_weights, self.discriminator_weights = pickle.load(file)
+            self.reverse_lookup = jnp.load(reverse_file)
         with open(meta_file, 'r') as f:
             self.metadata = json.load(f)
-        self.reverse_lookup = jnp.load(reverse_file)
 
         self.n_qubits = self.metadata["n_qubits"]
         self.transformation = self.metadata["transformation"]
@@ -235,6 +241,7 @@ class DiscreteQGANModelHandler(BaseModelHandler):
         self.performed_trainings = len(self.metadata["training_data"])
         self.n_registers = self.metadata['n_registers']
         self.circuit_type = self.metadata['circuit_type']
+        self.save_artifacts = save_artifacts
 
         if random_seed is None:
             if self.random_key is None:
@@ -255,7 +262,8 @@ class DiscreteQGANModelHandler(BaseModelHandler):
                 self.normalizer = PITNormalizer(epsilon=1e-6)
             else:
                 raise ValueError("Transformation value must be either 'minmax' or 'pit'")
-        self.normalizer.reverse_lookup = self.reverse_lookup
+        if epoch > 0:
+            self.normalizer.reverse_lookup = self.reverse_lookup
 
         if self.generator is None:
             if self.circuit_type == 'copula':

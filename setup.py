@@ -35,7 +35,7 @@ if platform.system() == 'Linux':
               'pandas==1.4.3',
               'PennyLane==0.29.0',
               'pytest==7.4.0',
-              'scipy==1.9.0',
+              'scipy==1.11.3',
               'setuptools==61.2.0',
               'tqdm==4.64.1', ])
 elif platform.system() == 'Darwin':
@@ -56,7 +56,7 @@ elif platform.system() == 'Darwin':
               'pandas==1.4.3',
               'PennyLane==0.29.0',
               'pytest==7.4.0',
-              'scipy==1.9.0',
+              'scipy==1.11.3',
               'setuptools==61.2.0',
               'tqdm==4.64.1', ])
 elif platform.system() == 'Windows':

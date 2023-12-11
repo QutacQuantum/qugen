@@ -69,7 +69,8 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
         transformation: str = "pit",
         initial_sigma: float = 1e-2,
         save_artifacts=True,
-        slower_progress_update=False
+        slower_progress_update=False,
+        true_name=False
     ) -> BaseModelHandler:
         """Build the discrete qcbm model.
 
@@ -100,7 +101,10 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
         uniq = hashlib.md5(time_str).hexdigest()[:4]
         self.data_set = data_set
         self.circuit_type = "continuous"
-        self.model_name = model_name + '_'  + self.data_set + '_' + self.transformation + '_' + 'qcbm_' + uniq 
+        if true_name:
+            self.model_name = model_name
+        else:
+            self.model_name = model_name + '_'  + self.data_set + '_' + self.transformation + '_' + 'qcbm_' + uniq 
         self.path_to_models = "experiments/" + self.model_name
         print(self.model_name)
         self.metadata = dict(
@@ -109,6 +113,7 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
                 "data_set":  self.data_set,
                 "n_qubits": self.n_qubits,
                 "circuit_type": self.circuit_type,
+                "model_type": "QCBM",
                 "circuit_depth": self.circuit_depth,
                 "transformation": self.transformation,
                 "training_data": {},
@@ -146,7 +151,7 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
         return self
 
 
-    def reload(self, model_name: str, epoch: int) -> BaseModelHandler:
+    def reload(self, model_name: str, epoch: int, save_artifacts=True) -> BaseModelHandler:
         """Reload the parameters for the generator and the discriminator from the file weights_file.
 
         Args:
@@ -161,16 +166,20 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
 
         self.model_name = model_name
         self.path_to_models = "experiments/" + self.model_name
-        self.weights, self.sigma = np.load(weights_file, allow_pickle=True)
+        if epoch > 0:
+            self.weights, self.sigma = np.load(weights_file, allow_pickle=True)
         with open(meta_file, "r") as file:
             self.metadata = json.load(file)
 
-        self.reverse_lookup = jnp.load(reverse_file)
+        self.n_samples = 10000 # I added this because it is used for training and if the model is reloaded before it is trained, this number is missing otherwise.
+        if epoch > 0:
+            self.reverse_lookup = jnp.load(reverse_file)
         self.n_qubits = self.metadata["n_qubits"]
         self.transformation = self.metadata["transformation"]
         self.circuit_depth = self.metadata["circuit_depth"]
         self.performed_trainings = len(self.metadata["training_data"])
         self.random_key = jax.random.PRNGKey(2)
+        self.save_artifacts = save_artifacts
 
         if self.normalizer is None:
             if self.transformation == 'minmax':
@@ -179,7 +188,8 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
                 self.normalizer = PITNormalizer()
             else:
                 raise ValueError("Transformation value must be either 'minmax' or 'pit'")
-        self.normalizer.reverse_lookup = self.reverse_lookup
+        if epoch > 0:
+            self.normalizer.reverse_lookup = self.reverse_lookup
         if self.generator is None:
             self.generator, self.num_params = get_qnode(self.circuit_depth, self.n_qubits)
         return self

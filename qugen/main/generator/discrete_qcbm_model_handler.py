@@ -85,7 +85,8 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         transformation='pit',
         hot_start_path='',
         save_artifacts=True,
-        slower_progress_update=False
+        slower_progress_update=False,
+        true_name=False
     ) -> BaseModelHandler:
         """Build the discrete QCBM model.
         This defines the architecture of the model, including the circuit ansatz, data transformation and whether the artifacts are saved.
@@ -120,7 +121,10 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         self.transformation = transformation
         self.circuit_type = circuit_type
 
-        self.model_name = model_name + '_'  + self.data_set+ '_' + self.circuit_type + '_' + self.transformation+ '_' + 'qcbm_' + uniq 
+        if true_name:
+            self.model_name = model_name
+        else:
+            self.model_name = model_name + '_'  + self.data_set+ '_' + self.circuit_type + '_' + self.transformation+ '_' + 'qcbm_' + uniq 
 
         # jax specific
         self.key = jax.random.PRNGKey(random_seed)
@@ -146,6 +150,7 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             'n_qubits': self.n_qubits,
             'n_registers': self.n_registers,
             'circuit_type': self.circuit_type,
+            'model_type': 'QCBM',
             'circuit_depth': self.circuit_depth,
             'transformation': self.transformation,
             'hot_start_path': self.hot_start_path, 
@@ -189,7 +194,7 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         return self
 
     def reload(
-        self, model_name: str, epoch: int, random_seed: Optional[int] = None
+        self, model_name: str, epoch: int, save_artifacts=True, random_seed: Optional[int] = None, 
     ) -> BaseModelHandler:
         """Reload the model parameters and the lastest sigma for the continuing training of the generator from the file weights_file.
 
@@ -204,8 +209,9 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         meta_file = "experiments/"+ model_name + "/" +  "meta.json"
         reverse_file = "experiments/" + model_name + "/" + 'reverse_lookup.npy'
 
-        self.weights, self.sigma = np.load(weights_file, allow_pickle=True)
-        self.reverse_lookup = jnp.load(reverse_file)
+        if epoch > 0:
+            self.weights, self.sigma = np.load(weights_file, allow_pickle=True)
+            self.reverse_lookup = jnp.load(reverse_file)
         
         with open(meta_file, 'r') as f:
             self.metadata = json.load(f)
@@ -226,6 +232,7 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         self.transformation = self.metadata["transformation"]
         self.performed_trainings = len(self.metadata["training_data"])
         self.circuit_type = self.metadata['circuit_type']
+        self.save_artifacts = save_artifacts
 
         if self.generator is None:
             if self.circuit_type == 'copula':
