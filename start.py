@@ -10,8 +10,11 @@ print("Hello!")
 
 print("Trying to import the libraries needed to run QUGEN...")
 try:
-    import pennylane, jax, glob, re, abc, pathlib, typing, numpy, pandas, tqdm, time, hashlib, cma, pickle
+    import pennylane, jax, glob, re, abc, pathlib, typing, pandas, tqdm, time, hashlib, cma, pickle
+    # import matplotlib
+    # matplotlib.use("TkAgg")
     import matplotlib.pyplot as plt
+    import numpy as np
     import jax.numpy as jnp
     print("Successfull!")
     print("\n")
@@ -141,7 +144,7 @@ def get_data_sets():
 
 ## functions for the differen choices in the main menu ##
 
-def load_model(model_info):
+def load_model(model_info: dict):
     chosen_model, model = None, None
     if len(model_info.keys()) == 0:
         print("No models found. Please Create a model first.")
@@ -160,9 +163,7 @@ def load_model(model_info):
         os.chdir(script_dir) # change back to the default for this script
     return chosen_model, model 
 
-
-
-def create_model(model_info):
+def create_model(model_info: dict):
     # parameter choice
     datatype = questionary.select("Which type of data should the model use?", choices=get_choices("data")).ask()
     modeltype = questionary.select("Which model type should be used?", choices=get_choices("model")).ask()
@@ -345,21 +346,27 @@ def test_experiment(model_info, model):
     savemode = False
     while True:
         if savemode:
-            chosen_option = questionary.select("What kind of test or visualisation do you want to do?", choices=get_choices("tests")).ask()
-        else:
             chosen_option = questionary.select("What kind of test or visualisation do you want to do?", choices=get_choices("tests_save")).ask()
+        else:
+            chosen_option = questionary.select("What kind of test or visualisation do you want to do?", choices=get_choices("tests")).ask()
         match chosen_option:
             case "KL Loss":
                 print("Evaluating model...")
+                # change model directory so that reload functions correctly as it is hard coded to work if the file is in the apps/logistics directory
+                os.chdir(os.path.join(script_dir,"apps/logistics"))
                 evaluation_df = model.evaluate(data)
+                os.chdir(script_dir) # change back to the default for this script
 
                 # find the model with the minimum Kullbach-Liebler divergence:
 
-                minimum_kl_data = evaluation_df.loc[evaluation_df["kl_original_space"].idxmin()]
-                minimum_kl_calculated = minimum_kl_data["kl_original_space"]
-                print(f"{minimum_kl_calculated=}")
-                print(evaluation_df)
-                # plt.evaluation_df
+                # minimum_kl_data = evaluation_df.loc[evaluation_df["kl_original_space"].idxmin()]
+                # minimum_kl_calculated = minimum_kl_data["kl_original_space"]
+                # print(f"{minimum_kl_calculated=}")
+                plt.plot(range(len(evaluation_df["kl_original_space"])),evaluation_df["kl_original_space"])
+                plt.show()
+                if savemode:
+                    filename = input("Save file as: ")
+                    plt.savefig(filename)
             case "Sample":
                 print("Not yet fully implemented")
                 

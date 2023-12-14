@@ -181,6 +181,7 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         self.random_key = jax.random.PRNGKey(2)
         self.path_to_models =  "experiments/" + self.metadata["model_name"]
         self.save_artifacts = save_artifacts
+        self.model_name = model_name
 
         if self.normalizer is None:
             if self.transformation == "minmax":

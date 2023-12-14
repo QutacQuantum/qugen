@@ -143,21 +143,25 @@ class BaseModelHandler(ABC):
                 refresh=False,
             )
 
-        fig = plt.figure()
-        fig.suptitle(f"{self.path_to_models}, KL={best_kl_original_space}")
-        samples_idx = np.random.choice(len(best_samples_original_space), 1000)
-        samples = best_samples_original_space[samples_idx]
-        if dimension == 2:
-            ax = fig.add_subplot()
-            ax.scatter(samples[:, 0], samples[:, 1])
-        elif dimension == 3:
-            ax = fig.add_subplot(projection='3d')
-            ax.scatter(samples[:, 0], samples[:, 1], samples[:, 2])
-            ax.view_init(elev=10., azim=20)
+        if dimension in [2,3]:
+            fig = plt.figure()
+            fig.suptitle(f"{self.path_to_models}, KL={best_kl_original_space}")
+            samples_idx = np.random.choice(len(best_samples_original_space), 1000)
+            samples = best_samples_original_space[samples_idx]
+            if dimension == 2:
+                ax = fig.add_subplot()
+                ax.scatter(samples[:, 0], samples[:, 1])
+            elif dimension == 3:
+                ax = fig.add_subplot(projection='3d')
+                ax.scatter(samples[:, 0], samples[:, 1], samples[:, 2])
+                ax.view_init(elev=10., azim=20)
+            plt.savefig(f"{self.path_to_models}/scatterplot_best_samples_original_space.png")
+        elif dimension > 3:
+            print("Not Creating a Scatter plot as the dimension is greater than 3.")
         else:
             raise ValueError
-        plt.savefig(f"{self.path_to_models}/scatterplot_best_samples_original_space.png")
-    
+        
+        it_list = list(map(lambda x: int(x), it_list))
         kl_results = pd.DataFrame(
             {
                 "iteration": it_list,
