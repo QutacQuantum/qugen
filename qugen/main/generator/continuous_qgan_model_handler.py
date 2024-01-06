@@ -249,20 +249,12 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         D = Discriminator()
         D.apply = jax.jit(D.apply)
         epsilon = 1e-10
-        #v_qnode = jax.vmap(self.generator, in_axes=(0, None), out_axes=-1)
         
-            v_qnode = jax.vmap(self.generator, in_axes=(0, None))
-            #v_qnode2 = jax.vmap(self.generator, in_axes=(0, None), out_axes=(0, 0,0))
-        else:
-            v_qnode = jax.vmap(self.generator, in_axes=(0, None))
-            #v_qnode2 = jax.vmap(self.generator, in_axes=(0, None), out_axes=-1)
+        v_qnode = jax.vmap(self.generator, in_axes=(0, None))
 
         def cost_fn_discriminator(z, X, generator_weights, discriminator_weights):
-            G_sample = self.convert_from_pennylane_new(v_qnode(z, generator_weights))
-            
+            G_sample = self.standardize_pennylane_output(v_qnode(z, generator_weights))
             D_fake = D.apply(discriminator_weights, G_sample)
-
-            #D_fake = D.apply(discriminator_weights, jnp.hstack(G_sample[0].reshape(-1, 1), G_sample[1].reshape(-1, 1), G_sample[2].reshape(-1, 1)))
             D_real = D.apply(discriminator_weights, X)
             loss_1 = -jnp.mean(jnp.log(D_real + epsilon))
             loss_2 = -jnp.mean(jnp.log(1.0 - D_fake + epsilon))
@@ -271,11 +263,7 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         
 
         def cost_fn_generator(z, generator_weights, discriminator_weights):
-            G_sample = self.convert_from_pennylane_new(v_qnode(z, generator_weights))
-            # res_list = []
-            # for qubit_output in G_sample:
-            #     res_list.append(qubit_output.reshape(-1, 1))
-            # G_sample_np = jnp.hstack(res_list)
+            G_sample = self.standardize_pennylane_output(v_qnode(z, generator_weights))
             D_fake = D.apply(discriminator_weights, G_sample)
             G_loss = -jnp.mean(jnp.log(D_fake + epsilon))  # Vanilla GAN
             return G_loss
@@ -418,7 +406,7 @@ class ContinuousQGANModelHandler(BaseModelHandler):
         self.random_key, subkey = jax.random.split(self.random_key)
         noise = jax.random.normal(subkey, (n_samples, self.n_qubits))
         v_qnode = jax.vmap(lambda inpt: self.generator(inpt, self.generator_weights))
-        samples_transformed = (self.convert_from_pennylane_new(v_qnode(noise)) + 1) / 2
+        samples_transformed = (self.standardize_pennylane_output(v_qnode(noise)) + 1) / 2
         samples_transformed = np.asarray(samples_transformed)
 
         return samples_transformed

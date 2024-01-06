@@ -190,13 +190,15 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
         return self
 
     def cost(self, weights, noise):
-        res = self.v_qnode(noise, weights)
-        res = (jnp.array(res)+1)/2
-
+        res = self.standardize_pennylane_output(self.v_qnode(noise, weights))
         # Check if the installed version is greater than 0.32
         # see https://docs.pennylane.ai/en/stable/introduction/returns.html
-        if version.parse(pennylane_version) > version.parse("0.30"):
-            res = res.transpose() # Pennylane 0.3x fix for different return value handling for qnodes
+        
+        
+        # if version.parse(pennylane_version) > version.parse("0.30"):
+        #     res = res.transpose() # Pennylane 0.3x fix for different return value handling for qnodes
+
+        res = (jnp.array(res)+1)/2
 
         bins = [16 for _ in range(self.n_qubits)]
         bin_range = [(0, 1) for _ in range(self.n_qubits)]
@@ -208,6 +210,7 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
     
     def evaluator(self, solutions, noise): 
         jnp_weights = jnp.array([jnp.array(np.reshape(solution, self.weights_shape)) for solution in solutions])
+        
         return self.v_cost(jnp_weights, noise).tolist()
 
 
@@ -377,7 +380,7 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
         self.random_key, subkey = jax.random.split(self.random_key)
         noise = jax.random.uniform(subkey, (n_samples, self.n_qubits))*2*jnp.pi - jnp.pi
         v_qnode = jax.vmap(lambda inpt: self.generator(inpt, self.weights))
-        samples_transformed = v_qnode(noise)
+        samples_transformed = self.standardize_pennylane_output(v_qnode(noise))
         samples_transformed = (np.asarray(samples_transformed) + 1) / 2
 
         return samples_transformed  
@@ -392,3 +395,17 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
             np.array: Array of samples of shape (n_samples, sample_dimension).
         """
         return self.predict(n_samples)
+
+
+    def standardize_pennylane_output(self, G_sample):
+        """ Adapt to new QNode return values with newer Pennylane Versions
+            https://docs.pennylane.ai/en/stable/introduction/returns.html
+        """
+        if version.parse(pennylane_version) > version.parse("0.32"):
+            res_list = []
+            for qubit_output in G_sample:
+                res_list.append(qubit_output.reshape(-1, 1))
+            G_sample_np = jnp.hstack(res_list)
+            return G_sample_np
+        else:
+            return G_sample
