@@ -24,10 +24,16 @@ def get_qnode(circuit_depth, n_qubits):
     diff_method = "best"
     dev = qml.device("default.qubit", wires=n_qubits)
 
+    num_trainable_params = 0
+
     def qnode_fn(inputs, weights):
+        nonlocal num_trainable_params 
+        num_trainable_params = 0
         for i in range(circuit_depth):
             qml.AngleEmbedding(inputs, wires=range(n_qubits))
             qml.StronglyEntanglingLayers(weights[i], wires=range(n_qubits))
+            num_trainable_params += weights[i].size
+
         return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
 
     dummy_noise_inputs = jnp.ones((n_qubits,))
@@ -42,9 +48,10 @@ def get_qnode(circuit_depth, n_qubits):
     # From the value specs["num_trainable_params"] calculated by pennylane, subtract the number of times the noise is
     # loaded into the circuit. It does not seem to be possible to specify to not count one of the function arguments.
     # Tested with both lambda and functools.partial, but it does not work. Therefore, manual subtraction is performed.
-    num_trainable_params = specs["num_trainable_params"] - circuit_depth * n_qubits
+    num_trainable_params_spec = specs["num_trainable_params"] - circuit_depth * n_qubits
     qnode = jax.jit(qnode)
-
+    #print("Trainable parameters (count): ", num_trainable_params, 
+    #      "Trainable parameters (spec): ", num_trainable_params_spec)
     return qnode, num_trainable_params
 
 
