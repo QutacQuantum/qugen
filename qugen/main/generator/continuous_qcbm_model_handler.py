@@ -191,13 +191,6 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
 
     def cost(self, weights, noise):
         res = self.standardize_pennylane_output(self.v_qnode(noise, weights))
-        # Check if the installed version is greater than 0.32
-        # see https://docs.pennylane.ai/en/stable/introduction/returns.html
-        
-        
-        # if version.parse(pennylane_version) > version.parse("0.30"):
-        #     res = res.transpose() # Pennylane 0.3x fix for different return value handling for qnodes
-
         res = (jnp.array(res)+1)/2
 
         bins = [16 for _ in range(self.n_qubits)]
