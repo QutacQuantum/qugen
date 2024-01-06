@@ -24,6 +24,11 @@ import hashlib
 import os
 import cma
 
+import pennylane as qml
+# Get the current installed version of PennyLane
+pennylane_version = qml.__version__
+
+from packaging import version
 import pickle
 import jax
 import jax.numpy as jnp
@@ -187,6 +192,11 @@ class ContinuousQCBMModelHandler(BaseModelHandler):
     def cost(self, weights, noise):
         res = self.v_qnode(noise, weights)
         res = (jnp.array(res)+1)/2
+
+        # Check if the installed version is greater than 0.32
+        # see https://docs.pennylane.ai/en/stable/introduction/returns.html
+        if version.parse(pennylane_version) > version.parse("0.30"):
+            res = res.transpose() # Pennylane 0.3x fix for different return value handling for qnodes
 
         bins = [16 for _ in range(self.n_qubits)]
         bin_range = [(0, 1) for _ in range(self.n_qubits)]

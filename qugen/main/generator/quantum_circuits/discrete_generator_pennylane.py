@@ -42,6 +42,7 @@ def compute_gradient_JAX(samples, discriminator, discriminator_weights):
     return jnp.array(gradient)
 
 def discrete_copula_circuit_JAX(n_qubits, n_registers, circuit_depth):
+    number_trainable_parameters = 0
     def copula_block(n_qubits, n_registers):
         n = n_qubits // n_registers
         for i in range(n):
@@ -53,6 +54,9 @@ def discrete_copula_circuit_JAX(n_qubits, n_registers, circuit_depth):
 
     def copula_parametric(weights, n_qubits, n_registers, circuit_depth):
         n = n_qubits // n_registers
+
+        nonlocal number_trainable_parameters
+        number_trainable_parameters = 0
         count = 0
         for _ in range(circuit_depth):
             for k in range(n):
@@ -65,6 +69,8 @@ def discrete_copula_circuit_JAX(n_qubits, n_registers, circuit_depth):
                 for l in range(n_registers):
                     qml.IsingXX(weights[count], wires=[l * n + i, l * n + j])
                     count += 1
+        
+        number_trainable_parameters = count
 
     def qnode_fn(weights):
         copula_block(n_qubits, n_registers=n_registers)
@@ -89,11 +95,20 @@ def discrete_copula_circuit_JAX(n_qubits, n_registers, circuit_depth):
     dummy_qnode = qml.QNode(qnode_fn, dummy_device, diff_method=None, interface="jax")
     # Need to pass in a dummy array jnp.zeros((1,)) to get the number of trainable parameters since in some cases this
     # number actually depends on the input array (because it is inferred from it), e.g. in templates like
-    return qnode_with_variable_random_key, qml.specs(dummy_qnode)(jnp.zeros((1,)))["num_trainable_params"]
+    # qml.specs(dummy_qnode)(jnp.zeros((1,)))["num_trainable_params"]
+    
+    # execute node once to get number of trainable parameters
+    dummy_qnode(jnp.zeros((1,)))
+    return qnode_with_variable_random_key, number_trainable_parameters
 
 
 def discrete_standard_circuit_JAX(n_qubits, n_registers, circuit_depth):
+    
+    number_trainable_parameters = 0
+
     def standard_parametric(weights, n_qubits, n_registers, circuit_depth):
+        nonlocal number_trainable_parameters
+        number_trainable_parameters = 0
         count = 0
         for _ in range(circuit_depth):
             for k in range(n_qubits):
@@ -110,6 +125,7 @@ def discrete_standard_circuit_JAX(n_qubits, n_registers, circuit_depth):
                 target_qubit = k+1
                 qml.CRY(weights[count], wires=[control_qubit, target_qubit])
                 count += 1
+        number_trainable_parameters = count
 
     def qnode_fn(weights):
         standard_parametric(weights, n_qubits, n_registers=n_registers,
@@ -134,7 +150,11 @@ def discrete_standard_circuit_JAX(n_qubits, n_registers, circuit_depth):
     dummy_qnode = qml.QNode(qnode_fn, dummy_device, diff_method=None, interface="jax")
     # Need to pass in a dummy array jnp.zeros((1,)) to get the number of trainable parameters since in some cases this
     # number actually depends on the input array (because it is inferred from it), e.g. in templates like
-    return qnode_with_variable_random_key_and_shots, qml.specs(dummy_qnode)(jnp.zeros((1,)))["num_trainable_params"]
+    # qml.specs(dummy_qnode)(jnp.zeros((1,)))["num_trainable_params"]
+    
+    # execute node once to get number of trainable parameters
+    dummy_qnode(jnp.zeros((1,)))
+    return qnode_with_variable_random_key_and_shots, number_trainable_parameters
 
 
 def center(coord, n):
