@@ -8,6 +8,7 @@ import json
 # test that the correct environment is activated
 print("Hello!")
 
+# COPY FOR having all necessary imports. copy till ###########################
 print("Trying to import the libraries needed to run QUGEN...")
 try:
     import pennylane, jax, glob, re, abc, pathlib, typing, pandas, tqdm, time, hashlib, cma, pickle
@@ -41,7 +42,7 @@ except ModuleNotFoundError:
     print("Stopping... ")
     print("\n")
     sys.exit()
-
+###########################
 
 try:
     import questionary
@@ -108,6 +109,7 @@ def float_input(var_name, help_text="no help text implemented yet"):
     return float(var)
 
 def get_epoch(model_name):
+    # COPY FOR getting the newest epoch of a pretrained experiment. You need to set this if you want to proceed with the experiment in its trained state. copy till ###########################
     path = os.path.join(experiment_path,model_name)
     
     if len([f for f in os.listdir(os.path.join(experiment_path, model_name)) if any([f.endswith(x) for x in [".npy",".pickle"]])]) == 0:
@@ -119,6 +121,7 @@ def get_epoch(model_name):
         filename = int(filename)
         return filename
     return max(list(map(split_datafile_names,[f for f in os.listdir(path) if any([f.endswith(x) for x in [".npy", ".pickle"]]) and not f.startswith("reverse_lookup")])))
+###########################
 
 def get_model(chosen_model_info):
     datatype = chosen_model_info["circuit_type"]
@@ -154,16 +157,20 @@ def load_model(model_info: dict):
         model = get_model(model_info[chosen_model])
         if model is None: # pass error through if it arises.
             return None, None
+        # COPY FOR loading models. copy till ###########################
         # get num of epochs
         last_epoch = get_epoch(chosen_model)
         # change model directory so that reload functions correctly as it is hard coded to work if the file is in the apps/logistics directory
         os.chdir(os.path.join(script_dir,"apps/logistics"))
         # reload model params
         model = model.reload(chosen_model, epoch=last_epoch)
+        ###########################
         os.chdir(script_dir) # change back to the default for this script
     return chosen_model, model 
 
 def create_model(model_info: dict):
+    # TODO transformation pit should go with circuit copula and the other tow together, but this is only recommended; this should go into an explainer
+    # TODO better explainers how to put pics in docs and link to them via docstrings; keys in metadata
     # parameter choice
     datatype = questionary.select("Which type of data should the model use?", choices=get_choices("data")).ask()
     modeltype = questionary.select("Which model type should be used?", choices=get_choices("model")).ask()
@@ -178,8 +185,9 @@ def create_model(model_info: dict):
         initial_sigma = float_input("initial sigma")
     
     if datatype == "Discrete":
-        n_qubits = integer_input("number of qubits", "The number of QBits available to the model.")
-        n_registers = integer_input("number of registers")
+        n_registers = dataset.shape[1]
+        n_qubits = integer_input("number of qubits per register", "The number of QBits available to the model.")*n_registers # better help string
+        
     
     # name choice
     chosen_model_name = input("What should the model be named (Cancel the Creation with 'Cancel')? ")
@@ -204,6 +212,7 @@ def create_model(model_info: dict):
         n_qubits = data.shape[1]
         
     # choose and build model according to the specifications
+    # COPY FOR creating models (with some adaptation). copy till ###########################
     match [datatype, modeltype]:
         case ["Continuous", "QCBM"]:
             model = ContinuousQCBMModelHandler()
@@ -255,6 +264,7 @@ def create_model(model_info: dict):
                 circuit_type=circuit_type,
                 true_name=True
             )
+    ###########################
     os.chdir(script_dir) # change back to the default for this script
            
     print("Done. \n")
@@ -264,6 +274,7 @@ def create_model(model_info: dict):
     return chosen_model_name, model
 
 def train_model(model, model_info):
+    print(model_info)
     # get necessary specifications of the model
     datatype, modeltype = model_info["circuit_type"], model_info["model_type"]
     # get training parameters
@@ -274,6 +285,7 @@ def train_model(model, model_info):
         initial_learning_rate_discriminator = float_input("initial discriminator learning rate")
     elif modeltype == "QCBM":
         hist_samples = integer_input("number of histogram samples")
+    # COPY FOR training models. copy till ###########################
     # change model directory so that reload functions correctly as it is hard coded to work if the file is in the apps/logistics directory
     os.chdir(os.path.join(script_dir,"apps/logistics")) 
     data_set_path = os.path.join("training_data",model_info["data_set"])
@@ -314,6 +326,7 @@ def train_model(model, model_info):
                 batch_size=batch_size,
             )
     os.chdir(script_dir) # change back to the default for this script
+    ###########################
     print("Training successfull!")
 
 def add_dataset(): 
@@ -335,7 +348,7 @@ def add_dataset():
         print(f"Error incured. \nError code: {result.returncode}. \nError message: {result}")
     
 def test_experiment(model_info, model):
-    # TODO: Ideen: Show as animation how sampling changes with training; Loss landscape projected in 2D
+    # TODO: Ideas: Show as animation how sampling changes with training; Loss landscape projected in 2D
     # load dataset
     dataset = model_info["data_set"] # TODO gives Error
     # change model directory so that reload functions correctly as it is hard coded to work if the file is in the apps/logistics directory

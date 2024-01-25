@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 
 def get_qnode(circuit_depth, n_qubits):
     diff_method = "best"
+    print("wires: ",n_qubits)
     dev = qml.device("default.qubit", wires=n_qubits)
 
     def qnode_fn(inputs, weights):
