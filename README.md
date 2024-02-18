@@ -4,6 +4,10 @@
 2) Activate the enviroment, e.g ``source activate qugen_env``.
 3) Run ``pip install .`` or ``pip install -e .`` to install it in editable mode.
 
+Note JaxLib 0.3.25 as specified in `setup.py` might not be available via PyPi and must be installed manually:
+
+    pip install jaxlib==0.3.25 -f https://storage.googleapis.com/jax-releases/jax_releases.html
+
 
 ## Instructions for training and running models
 Each model type has an example script to create and train a model found  at ''apps/logistics/train_xyz.py'' file, e.g. ''apps/logistics/train_continuous_qgan.py''
