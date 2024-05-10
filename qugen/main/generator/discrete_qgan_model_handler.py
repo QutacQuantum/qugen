@@ -42,9 +42,8 @@ from qugen.main.data.discretization import compute_discretization
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-from jax.config import config
 
-config.update("jax_enable_x64", True)
+jax.config.update("jax_enable_x64", True)
 mpl.use("Agg")
 
 

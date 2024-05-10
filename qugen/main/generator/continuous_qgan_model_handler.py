@@ -36,15 +36,15 @@ from jax.tree_util import tree_structure
 import optax
 import numpy as np
 
-from jax.config import config
-config.update("jax_enable_x64", False)
-
 from qugen.main.generator.base_model_handler import BaseModelHandler
 from qugen.main.generator.quantum_circuits.continuous_circuits import get_qnode
 from qugen.main.data.helper import kl_divergence_from_data
 from qugen.main.data.helper import CustomDataset
 from qugen.main.discriminator.discriminator_for_continuous_qgan import Discriminator
 from qugen.main.data.data_handler import PITNormalizer, MinMaxNormalizer
+
+
+jax.config.update("jax_enable_x64", False)
 
 
 class ContinuousQGANModelHandler(BaseModelHandler):
