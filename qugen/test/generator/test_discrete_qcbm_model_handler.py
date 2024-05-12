@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, call
 
 import numpy as np
 import jax.numpy as jnp
-import jaxlib as jxlib
+#import jaxlib as jxlib
 import pytest
 
 from qugen.main.generator.discrete_qcbm_model_handler import DiscreteQCBMModelHandler

@@ -39,9 +39,12 @@ from qugen.main.data.helper import random_angle, kl_divergence
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-from jax.config import config
+# from jax.config import config
+# config.update("jax_enable_x64", True)
+import jax
+jax.config.update("jax_enable_x64", True)
 
-config.update("jax_enable_x64", True)
+
 mpl.use("Agg")
 
 class DiscreteQCBMModelHandler(BaseModelHandler):

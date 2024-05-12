@@ -19,9 +19,11 @@ from unittest.mock import MagicMock, call
 
 import numpy as np
 import jax.numpy as jnp
-import jaxlib as jxlib
+#import jaxlib as jxlib
 import pytest
 from qugen.main.generator.discrete_qgan_model_handler import DiscreteQGANModelHandler
+
+
 class TestDiscreteQGANModelHandler:
 
     def test_build(self):

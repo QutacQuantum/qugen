@@ -34,8 +34,11 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from jax.config import config
-config.update("jax_enable_x64", False)
+# from jax.config import config
+# config.update("jax_enable_x64", False)
+import jax
+jax.config.update("jax_enable_x64", True)
+
 
 from qugen.main.generator.base_model_handler import BaseModelHandler
 from qugen.main.data.data_handler import PITNormalizer, MinMaxNormalizer
