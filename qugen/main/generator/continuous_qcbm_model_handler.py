@@ -34,14 +34,14 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from jax.config import config
-config.update("jax_enable_x64", False)
-
 from qugen.main.generator.base_model_handler import BaseModelHandler
 from qugen.main.data.data_handler import PITNormalizer, MinMaxNormalizer
 from qugen.main.data.helper import kl_divergence
 
 from qugen.main.generator.quantum_circuits.continuous_circuits import get_qnode
+
+
+jax.config.update("jax_enable_x64", False)
 
 
 class ContinuousQCBMModelHandler(BaseModelHandler):
