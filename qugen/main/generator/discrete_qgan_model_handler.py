@@ -39,6 +39,8 @@ from qugen.main.data.helper import kl_divergence
 from qugen.main.discriminator.discriminator import Discriminator_JAX
 from qugen.main.data.discretization import compute_discretization
 
+import pennylane as qml
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -133,7 +135,15 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             'data_set ': self.data_set_name,
             'n_epochs': self.n_epochs,
             'discriminator': 'digital',
+            'num_generator_params': None,  # Will be set after generator is created
+            'circuit_info': {
+                'generator_architecture': f'{self.circuit_type}_circuit',
+                'discriminator_architecture': 'classical_neural_network',
+                'total_qubits': self.n_qubits,
+                'qubits_per_register': self.n_qubits // self.n_registers,
+            },
             "training_data": {},
+            "performance_metrics": {},
         })
 
         # save artifacts only when save_artifacts flag is true, used for testing
@@ -184,6 +194,10 @@ class DiscreteQGANModelHandler(BaseModelHandler):
         # Draw from interval [0, pi) because that is how it was before
         self.generator_weights = jax.random.uniform(subkey, shape=(self.num_generator_params,)) * jnp.pi
         print(f"{self.num_generator_params=}")
+        
+        # Update metadata with actual parameter count
+        self.metadata['num_generator_params'] = self.num_generator_params
+        self.metadata['circuit_info']['generator_params'] = self.num_generator_params
 
 
     def save(self, file_path: Path, overwrite: bool = True) -> BaseModelHandler:
@@ -266,6 +280,97 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             else:
                 raise ValueError("Circuit value must be either 'standard' or 'copula'")
             self.generator, self.num_generator_params = get_generator(self.n_qubits, self.n_registers, self.circuit_depth)
+        return self
+
+    def load_weights_from_file(
+        self, model_name: str, epoch: int, random_seed: Optional[int] = None
+    ) -> BaseModelHandler:
+        """Alternative method to load weights into a fresh DiscreteQGANModelHandler instance.
+        
+        This method allows you to instantiate a DiscreteQGANModelHandler and directly load
+        pretrained weights without calling build() first.
+        
+        Args:
+            model_name (str): The name of the model to load.
+            epoch (int): The epoch/iteration to load.
+            random_seed (int, Optional): Specify a random seed for reproducibility.
+            
+        Returns:
+            BaseModelHandler: The model with loaded weights and configuration.
+            
+        Example:
+            >>> model = DiscreteQGANModelHandler()
+            >>> model.load_weights_from_file("my_model_name", epoch=500)
+            >>> samples = model.predict(1000)
+        """
+        # Set up file paths
+        self.model_name = model_name
+        self.path_to_models = "experiments/" + self.model_name
+        weights_file = f"experiments/{model_name}/parameters_training_iteration={epoch}.pickle"
+        meta_file = f"experiments/{model_name}/meta.json"
+        reverse_file = f"experiments/{model_name}/reverse_lookup.npy"
+        
+        # Load weights and metadata
+        with open(weights_file, "rb") as file:
+            self.generator_weights, self.discriminator_weights = pickle.load(file)
+        with open(meta_file, 'r') as f:
+            self.metadata = json.load(f)
+        self.reverse_lookup = jnp.load(reverse_file)
+        
+        # Initialize model parameters from metadata
+        self.n_qubits = self.metadata["n_qubits"]
+        self.n_registers = self.metadata["n_registers"]
+        self.circuit_depth = self.metadata["circuit_depth"]
+        self.transformation = self.metadata["transformation"]
+        self.circuit_type = self.metadata["circuit_type"]
+        self.data_set_name = self.metadata.get("data_set ", "unknown")  # Note: space in key
+        self.performed_trainings = len(self.metadata["training_data"])
+        
+        # Set up random key
+        if random_seed is None:
+            self.random_key = jax.random.PRNGKey(42)  # Default seed
+        else:
+            self.random_key = jax.random.PRNGKey(random_seed)
+        
+        # Initialize discriminator
+        self.D = Discriminator_JAX()
+        self.D.apply = jax.jit(self.D.apply)
+        
+        # Set up data normalizer
+        if self.transformation == 'minmax':
+            self.normalizer = MinMaxNormalizer(epsilon=1e-6)
+        elif self.transformation == 'pit':
+            self.normalizer = PITNormalizer(epsilon=1e-6)
+        else:
+            raise ValueError("Transformation value must be either 'minmax' or 'pit'")
+        self.normalizer.reverse_lookup = self.reverse_lookup
+        
+        # Initialize quantum generator
+        if self.circuit_type == 'copula':
+            from qugen.main.generator.quantum_circuits.discrete_generator_pennylane import \
+                discrete_copula_circuit_JAX as get_generator
+        elif self.circuit_type == 'standard':
+            from qugen.main.generator.quantum_circuits.discrete_generator_pennylane import \
+                discrete_standard_circuit_JAX as get_generator
+        else:
+            raise ValueError("Circuit value must be either 'standard' or 'copula'")
+        
+        self.generator, self.num_generator_params = get_generator(
+            self.n_qubits, self.n_registers, self.circuit_depth
+        )
+        
+        # Set other necessary attributes for compatibility
+        self.save_artifacts = False  # Default to not saving artifacts for loaded model
+        self.device = 'cpu'
+        self.beta_1 = 0.5
+        self.real_label = 1.
+        self.fake_label = 0.
+        self.n_samples = 10000
+        
+        print(f"Successfully loaded model '{model_name}' from epoch {epoch}")
+        print(f"Model configuration: {self.n_qubits} qubits, {self.n_registers} registers, "
+              f"circuit depth {self.circuit_depth}, {self.circuit_type} circuit, {self.transformation} transformation")
+        
         return self
 
     def train(
@@ -394,7 +499,8 @@ class DiscreteQGANModelHandler(BaseModelHandler):
         progress = tqdm(range(n_epochs), mininterval=10 if self.slower_progress_update else None)
 
         for it in progress:
-            if self.save_artifacts:
+            # Save weights every 100 iterations to match KL calculation frequency
+            if self.save_artifacts and it % 100 == 0:
                 self.save(
                     f"{self.path_to_models}/parameters_training_iteration={it + self.previous_trained_epochs }.pickle",
                     overwrite=False,
@@ -446,10 +552,10 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             if it % 100 == 0:
                 self.random_key, subkey = jax.random.split(self.random_key)
                 samples = self.generator(
-                subkey,
-                self.generator_weights,
-                n_shots=self.n_samples,
-            )
+                    subkey,
+                    self.generator_weights,
+                    n_shots=self.n_samples,
+                )
                 # Split the binary strings for each dimension into separate arrays
                 samples_dims = []
                 for dim in range(self.n_registers):
@@ -480,6 +586,22 @@ class DiscreteQGANModelHandler(BaseModelHandler):
 
                 kl_transformed_space = kl_divergence(distribution_pit, distribution_generator)
                 kl_list_transformed_space.append(kl_transformed_space)
+
+                # Update performance metrics in metadata
+                current_epoch = it + self.previous_trained_epochs
+                self.metadata['performance_metrics'][f'epoch_{current_epoch}'] = {
+                    'kl_divergence_transformed': float(kl_transformed_space),
+                    'generator_loss': float(cost_generator),
+                    'discriminator_loss': float(cost_discriminator),
+                    'iteration': current_epoch,
+                }
+
+                # Save QASM representation every 100 iterations if artifacts are saved
+                if self.save_artifacts:
+                    try:
+                        self.save_circuit_qasm(epoch=current_epoch)
+                    except Exception as e:
+                        print(f"Warning: Could not save QASM for epoch {current_epoch}: {e}")
 
                 progress.set_postfix(
                     loss_generator=cost_generator,
@@ -591,3 +713,135 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             samples = indices
 
         return samples
+
+    def get_circuit_qasm_string(self) -> str:
+        """Generate QASM string representation of the quantum generator circuit with current weights.
+        
+        Returns:
+            str: QASM string representation of the quantum generator circuit.
+        """
+        if self.generator_weights is None:
+            raise ValueError("Generator weights not available. Train the model first or reload weights.")
+        
+        # Create a temporary device for circuit visualization
+        dev = qml.device("default.qubit", wires=self.n_qubits)
+        
+        # Create a dummy circuit to visualize the structure
+        @qml.qnode(dev)
+        def circuit_for_qasm():
+            # Create a simplified version for visualization
+            # Since the actual generator includes sampling, we'll create a parameter-only circuit
+            if self.circuit_type == 'copula':
+                self._build_copula_circuit_for_qasm()
+            else:
+                self._build_standard_circuit_for_qasm()
+            
+            return qml.sample(wires=range(self.n_qubits))
+        
+        # Get the actual QASM representation
+        circuit_text = qml.to_openqasm(circuit_for_qasm)()
+        
+        # Add header with circuit information
+        qasm_header = f"""// Quantum Generator Circuit from QuGen DiscreteQGANModelHandler
+// Model: {self.model_name}
+// Qubits: {self.n_qubits}
+// Registers: {self.n_registers}
+// Circuit Type: {self.circuit_type}
+// Circuit Depth: {self.circuit_depth}
+// Generator Parameters: {self.num_generator_params}
+// Output: Samples probability distribution across all qubit states
+
+"""
+        
+        return qasm_header + circuit_text
+
+    def _build_copula_circuit_for_qasm(self):
+        """Build the actual copula circuit structure for QASM visualization."""
+        from itertools import combinations
+        
+        n = self.n_qubits // self.n_registers
+        
+        # 1. Copula block (Hadamards + inter-register CNOTs) - OUTSIDE circuit_depth loop
+        for i in range(n):
+            qml.Hadamard(wires=i)
+        
+        for j in range(self.n_registers - 1):
+            for k in range(n):
+                qml.CNOT(wires=[k, k + n * (j + 1)])
+        
+        # 2. Parametric part (matching copula_parametric from discrete_generator_pennylane.py)
+        param_idx = 0
+        for _ in range(self.circuit_depth):
+            # RZ-RX-RZ rotations on all qubits
+            for k in range(n):
+                for j in range(self.n_registers):
+                    wire = j * n + k
+                    if param_idx < len(self.generator_weights):
+                        qml.RZ(self.generator_weights[param_idx], wires=wire)
+                        param_idx += 1
+                    if param_idx < len(self.generator_weights):
+                        qml.RX(self.generator_weights[param_idx], wires=wire)
+                        param_idx += 1
+                    if param_idx < len(self.generator_weights):
+                        qml.RZ(self.generator_weights[param_idx], wires=wire)
+                        param_idx += 1
+            
+            # IsingXX gates for entanglement within each register
+            for i, j in combinations(range(n), 2):
+                for l in range(self.n_registers):
+                    if param_idx < len(self.generator_weights):
+                        qml.IsingXX(self.generator_weights[param_idx], wires=[l * n + i, l * n + j])
+                        param_idx += 1
+
+    def _build_standard_circuit_for_qasm(self):
+        """Build the actual standard circuit structure for QASM visualization."""
+        param_idx = 0
+        
+        for _ in range(self.circuit_depth):
+            # 1. RY rotations on all qubits
+            for k in range(self.n_qubits):
+                if param_idx < len(self.generator_weights):
+                    qml.RY(self.generator_weights[param_idx], wires=k)
+                    param_idx += 1
+            
+            # 2. IsingYY gates between adjacent qubits
+            for k in range(self.n_qubits - 1):
+                qubit_1 = k
+                qubit_2 = k + 1
+                if param_idx < len(self.generator_weights):
+                    qml.IsingYY(self.generator_weights[param_idx], wires=[qubit_1, qubit_2])
+                    param_idx += 1
+            
+            # 3. CRY (Controlled RY) gates between adjacent qubits
+            for k in range(self.n_qubits - 1):
+                control_qubit = k
+                target_qubit = k + 1
+                if param_idx < len(self.generator_weights):
+                    qml.CRY(self.generator_weights[param_idx], wires=[control_qubit, target_qubit])
+                    param_idx += 1
+
+    def save_circuit_qasm(self, file_path: str = None, epoch: int = None) -> str:
+        """Save the quantum generator circuit as a QASM string to file.
+        
+        Args:
+            file_path (str, optional): Custom file path. If None, uses default naming.
+            epoch (int, optional): Training epoch number for filename.
+            
+        Returns:
+            str: Path to the saved QASM file.
+        """
+        if file_path is None:
+            if epoch is not None:
+                file_path = f"{self.path_to_models}/generator_circuit_epoch_{epoch}.qasm"
+            else:
+                file_path = f"{self.path_to_models}/generator_circuit_current.qasm"
+        
+        qasm_string = self.get_circuit_qasm_string()
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        with open(file_path, 'w') as f:
+            f.write(qasm_string)
+        
+        return file_path

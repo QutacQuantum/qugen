@@ -51,6 +51,25 @@ class MinMaxNormalizer:
         return data * self.max + self.min
 
 
+class NoTransformNormalizer:
+    def __init__(self, reverse_lookup = None, epsilon = 0):
+        self.reverse_lookup = reverse_lookup
+        self.epsilon = epsilon
+
+    def fit_transform(self, data: np.ndarray) -> np.ndarray:
+        # Store original data statistics for inverse transform
+        self.data_min = data.min(axis=0)
+        self.data_max = data.max(axis=0)
+        self.reverse_lookup = (self.data_min, self.data_max)
+        return data
+
+    def transform(self, data: np.ndarray) -> np.ndarray:
+        return data
+
+    def inverse_transform(self, data: np.ndarray) -> np.ndarray:
+        return data
+
+
 class PITNormalizer():
     def __init__(self, reverse_lookup = None, epsilon = 0):
         self.reverse_lookup = reverse_lookup

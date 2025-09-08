@@ -33,8 +33,10 @@ import jax.numpy as jnp
 
 from qugen.main.generator.base_model_handler import BaseModelHandler
 from qugen.main.generator.quantum_circuits.discrete_generator_pennylane import generate_samples
-from qugen.main.data.data_handler import PITNormalizer, MinMaxNormalizer
+from qugen.main.data.data_handler import PITNormalizer, MinMaxNormalizer, NoTransformNormalizer
 from qugen.main.data.helper import random_angle, kl_divergence
+
+import pennylane as qml
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -98,7 +100,7 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             circuit_depth (int, optional): Number of repetitions of qml.StronglyEntanglingLayers. Defaults to 1.
             initial_sigma (float, optional): Initial value of sigma used in the CMA optimizer. Defaults to 2.0
             circuit_type (string, optional): name of the circuit anstaz to be used for the QCBM, either "copula" or "standard". Defaults to "copula"
-            transformation (str, optional): Type of normalization, either "minmax" or "pit". Defaults to "pit".
+            transformation (str, optional): Type of normalization, either "minmax", "pit", or "none". Defaults to "pit".
             hot_start_path (str, optional): Path to the location of previously trained model parameters in numpy array format. Defaults to '' which implies that the model will be trained starting with random weights.
             save_artifacts (bool, optional): Whether to save the artifacts to disk. Defaults to True.
             slower_progress_update (bool, optional): Controls how often the progress bar is updated. If set to True, update every 10 seconds at most, otherwise use tqdm defaults. Defaults to False.
@@ -125,7 +127,7 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         # jax specific
         self.key = jax.random.PRNGKey(random_seed)
 
-        if self.circuit_type == 'copula' and self.transformation != 'pit':
+        if self.circuit_type == 'copula' and self.transformation not in ['pit']:
             raise ValueError("Copula circuit must have PIT transformation. Current transformation: " + self.transformation)
 
        
@@ -135,7 +137,10 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         n = 2 ** (self.n_qubits // self.n_registers)
         for _ in range(self.n_registers):
             all_bins.append(n)
-            all_ranges.append([0, 1])
+            if self.transformation in ['minmax', 'pit']:
+                all_ranges.append([0, 1])  # Normalized data range
+            else:
+                all_ranges.append(None)  # Will be set dynamically for 'none' transformation
         self.all_bins = all_bins
         self.all_ranges = all_ranges
         self.path_to_models = "experiments/" + self.model_name
@@ -148,8 +153,16 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             'circuit_type': self.circuit_type,
             'circuit_depth': self.circuit_depth,
             'transformation': self.transformation,
-            'hot_start_path': self.hot_start_path, 
+            'hot_start_path': self.hot_start_path,
+            'num_params': None,  # Will be set after generator is created
+            'circuit_info': {
+                'generator_architecture': f'{self.circuit_type}_circuit',
+                'total_qubits': self.n_qubits,
+                'qubits_per_register': self.n_qubits // self.n_registers,
+            },
+            'timestamp': time.time(),
             "training_data": {},
+            "performance_metrics": {},
         })
 
 
@@ -170,6 +183,11 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         else:
             raise ValueError("Circuit value must be either 'standard' or 'copula'")
         self.generator, self.num_params = get_generator(self.n_qubits, self.n_registers, self.circuit_depth)
+        
+        # Update metadata with actual parameter count
+        self.metadata['num_params'] = self.num_params
+        self.metadata['circuit_info']['generator_params'] = self.num_params
+        
         return self
 
 
@@ -239,7 +257,7 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             self.generator, self.num_params = get_generator(self.n_qubits, self.n_registers, self.circuit_depth)
         return self
 
-
+  
     def plot_training_data(self, train_dataset: np.array):
         """ Plot training data and compute an estimate of the true probability distribution """
         size = (5, 5)
@@ -325,11 +343,20 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             self.normalizer = MinMaxNormalizer(epsilon=1e-6)
         elif self.transformation == 'pit':
             self.normalizer = PITNormalizer(epsilon=1e-6) 
+        elif self.transformation == 'none':
+            self.normalizer = NoTransformNormalizer(epsilon=1e-6)
         else:
-            raise ValueError("Transformation value must be either 'minmax' or 'pit'")    
+            raise ValueError("Transformation value must be either 'minmax', 'pit', or 'none'")    
 
         train_dataset = self.normalizer.fit_transform(train_dataset)
         self.reverse_lookup = self.normalizer.reverse_lookup
+        
+        # Update histogram ranges for 'none' transformation based on actual data
+        if self.transformation == 'none':
+            data_min = train_dataset.min(axis=0)
+            data_max = train_dataset.max(axis=0)
+            for i in range(self.n_registers):
+                self.all_ranges[i] = [data_min[i], data_max[i]]
 
         if self.performed_trainings == 0:
             self.previous_trained_epochs = 0 
@@ -400,10 +427,29 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             # save the logged process and the current weights to file
             self.weights = es.result[0]
             last_sigma = es.sigma
-            if self.save_artifacts:
-                file_path = f"{self.path_to_models}/parameters_training_iteration={iter + self.previous_trained_epochs}"
+            # Save artifacts every 100 iterations to reduce I/O
+            if self.save_artifacts and iter % 100 == 0:
+                current_epoch = iter + self.previous_trained_epochs
+                file_path = f"{self.path_to_models}/parameters_training_iteration={current_epoch}"
                 np.save(file_path, np.array([self.weights, last_sigma], dtype=object))
-                np.save(self.path_to_models+ '/log_' + str(iter + self.previous_trained_epochs), np.array(log))
+                np.save(self.path_to_models+ '/log_' + str(current_epoch), np.array(log))
+                
+                # Update performance metrics in metadata
+                self.metadata['performance_metrics'][f'epoch_{current_epoch}'] = {
+                    'kl_divergence_transformed': float(es.result[1]),
+                    'sigma': float(last_sigma),
+                    'iteration': current_epoch,
+                }
+                
+                # Save QASM representation every 100 iterations if artifacts are saved
+                try:
+                    self.save_circuit_qasm(epoch=current_epoch)
+                except Exception as e:
+                    print(f"Warning: Could not save QASM for epoch {current_epoch}: {e}")
+                
+                # Update metadata file
+                with open(self.path_to_models + "/" + "meta.json", "w+") as file:
+                    json.dump(self.metadata, file)
 
             t_0 = time.time()
         self.sigma = last_sigma
@@ -428,6 +474,8 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             self.transformer = PITNormalizer(epsilon=1e-6)
         elif self.transformation == 'minmax':  
             self.transformer = MinMaxNormalizer(epsilon=1e-6)
+        elif self.transformation == 'none':
+            self.transformer = NoTransformNormalizer(epsilon=1e-6)
             
         self.transformer.reverse_lookup = self.reverse_lookup
         samples = self.transformer.inverse_transform(samples_transformed)
@@ -462,4 +510,135 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
         samples_transformed = np.array(samples)        
         
         return samples_transformed    
+
+    def get_circuit_qasm_string(self) -> str:
+        """Generate QASM string representation of the quantum circuit with current weights.
+        
+        Returns:
+            str: QASM string representation of the quantum circuit.
+        """
+        if self.weights is None:
+            raise ValueError("Circuit weights not available. Train the model first or reload weights.")
+        
+        # Create a temporary device for circuit visualization
+        dev = qml.device("default.qubit", wires=self.n_qubits)
+        
+        # Create a dummy circuit to visualize the structure
+        @qml.qnode(dev)
+        def circuit_for_qasm():
+            # Create a simplified version for visualization
+            if self.circuit_type == 'copula':
+                self._build_copula_circuit_for_qasm()
+            else:
+                self._build_standard_circuit_for_qasm()
+            
+            return qml.sample(wires=range(self.n_qubits))
+        
+        # Get the actual QASM representation
+        circuit_text = qml.to_openqasm(circuit_for_qasm)()
+        
+        # Add header with circuit information
+        qasm_header = f"""// Quantum Circuit from QuGen DiscreteQCBMModelHandler
+// Model: {self.model_name}
+// Qubits: {self.n_qubits}
+// Registers: {self.n_registers}
+// Circuit Type: {self.circuit_type}
+// Circuit Depth: {self.circuit_depth}
+// Parameters: {self.num_params}
+// Output: Samples probability distribution across all qubit states
+
+"""
+        
+        return qasm_header + circuit_text
+
+    def _build_copula_circuit_for_qasm(self):
+        """Build the actual copula circuit structure for QASM visualization."""
+        from itertools import combinations
+        
+        n = self.n_qubits // self.n_registers
+        
+        # 1. Copula block (Hadamards + inter-register CNOTs)
+        for i in range(n):
+            qml.Hadamard(wires=i)
+        
+        for j in range(self.n_registers - 1):
+            for k in range(n):
+                qml.CNOT(wires=[k, k + n * (j + 1)])
+        
+        # 2. Parametric part (matching copula_parametric from discrete_generator_pennylane.py)
+        param_idx = 0
+        for _ in range(self.circuit_depth):
+            # RZ-RX-RZ rotations on all qubits
+            for k in range(n):
+                for j in range(self.n_registers):
+                    wire = j * n + k
+                    if param_idx < len(self.weights):
+                        qml.RZ(self.weights[param_idx], wires=wire)
+                        param_idx += 1
+                    if param_idx < len(self.weights):
+                        qml.RX(self.weights[param_idx], wires=wire)
+                        param_idx += 1
+                    if param_idx < len(self.weights):
+                        qml.RZ(self.weights[param_idx], wires=wire)
+                        param_idx += 1
+            
+            # IsingXX gates for entanglement within each register
+            for i, j in combinations(range(n), 2):
+                for l in range(self.n_registers):
+                    if param_idx < len(self.weights):
+                        qml.IsingXX(self.weights[param_idx], wires=[l * n + i, l * n + j])
+                        param_idx += 1
+
+    def _build_standard_circuit_for_qasm(self):
+        """Build the actual standard circuit structure for QASM visualization."""
+        param_idx = 0
+        
+        for _ in range(self.circuit_depth):
+            # 1. RY rotations on all qubits
+            for k in range(self.n_qubits):
+                if param_idx < len(self.weights):
+                    qml.RY(self.weights[param_idx], wires=k)
+                    param_idx += 1
+            
+            # 2. IsingYY gates between adjacent qubits
+            for k in range(self.n_qubits - 1):
+                qubit_1 = k
+                qubit_2 = k + 1
+                if param_idx < len(self.weights):
+                    qml.IsingYY(self.weights[param_idx], wires=[qubit_1, qubit_2])
+                    param_idx += 1
+            
+            # 3. CRY (Controlled RY) gates between adjacent qubits
+            for k in range(self.n_qubits - 1):
+                control_qubit = k
+                target_qubit = k + 1
+                if param_idx < len(self.weights):
+                    qml.CRY(self.weights[param_idx], wires=[control_qubit, target_qubit])
+                    param_idx += 1
+
+    def save_circuit_qasm(self, file_path: str = None, epoch: int = None) -> str:
+        """Save the quantum circuit as a QASM string to file.
+        
+        Args:
+            file_path (str, optional): Custom file path. If None, uses default naming.
+            epoch (int, optional): Training epoch number for filename.
+            
+        Returns:
+            str: Path to the saved QASM file.
+        """
+        if file_path is None:
+            if epoch is not None:
+                file_path = f"{self.path_to_models}/circuit_epoch_{epoch}.qasm"
+            else:
+                file_path = f"{self.path_to_models}/circuit_current.qasm"
+        
+        qasm_string = self.get_circuit_qasm_string()
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        with open(file_path, 'w') as f:
+            f.write(qasm_string)
+        
+        return file_path
 
