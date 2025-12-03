@@ -17,15 +17,17 @@ pip install -e .
 
 ### Known Issues and Fixes
 
-**Python 3.12 Compatibility Issues:**
-- If you encounter `AttributeError: module 'pkgutil' has no attribute 'ImpImporter'`, the setuptools version is incompatible
-- Fix: `pip install "setuptools>=64" --upgrade` then `pip install -e .`
-
 **PennyLane/Autoray Compatibility:**
 - If you see `AttributeError: module 'autoray.autoray' has no attribute 'NumpyMimic'`, downgrade autoray:
   ```bash
   pip install "autoray<0.6.0"
   ```
+
+**Note:** As of December 2025, dependencies have been updated to address security vulnerabilities:
+- setuptools>=70.0.0 (resolves Python 3.12 compatibility and CVEs)
+- pytest>=8.0.0
+- tqdm>=4.66.0
+- colorama>=0.4.6
 
 ## Commands
 
@@ -126,11 +128,27 @@ qugen/
 ## Development Notes
 
 ### Dependencies
-- JAX/JAXLib: Automatic differentiation and optimization
-- PennyLane: Quantum computing framework
-- NumPy/SciPy: Numerical computing
-- Matplotlib: Visualization
-- pytest: Testing framework
+
+**Core Framework:**
+- JAX/JAXLib (0.5.3): Automatic differentiation and optimization
+- PennyLane (0.42.3): Quantum computing framework
+- NumPy (1.26.4): Numerical computing
+- SciPy (>=1.13.0): Scientific computing
+
+**Optimization & ML:**
+- Optax (0.2.2): Gradient processing and optimization
+- Flax (>=0.10.0): Neural network library
+- CMA (3.2.2): Covariance Matrix Adaptation Evolution Strategy
+
+**Development & Visualization:**
+- pytest (>=8.0.0): Testing framework
+- Matplotlib (>=3.5.3): Visualization
+- pandas (>=1.4.3): Data manipulation
+
+**Build Tools:**
+- setuptools (>=70.0.0): Package management
+- tqdm (>=4.66.0): Progress bars
+- colorama (>=0.4.6): Terminal colors
 
 ### Testing Patterns
 - Tests use `unittest.mock.MagicMock` to mock expensive model operations
