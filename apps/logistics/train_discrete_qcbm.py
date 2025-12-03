@@ -19,6 +19,10 @@ from qugen.main.generator.discrete_qcbm_model_handler import (
 )
 from qugen.main.data.data_handler import load_data
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+
+
 data_set_name = "X_2D"
 data_set_path = f"./training_data/{data_set_name}"
 data, _ = load_data(data_set_path)
@@ -31,10 +35,10 @@ model.build(
     data_set_name,
     n_qubits=8,
     n_registers=2,
-    circuit_depth=2,
+    circuit_depth=16,
     initial_sigma=0.01,
-    circuit_type="copula",
-    transformation="pit",
+    circuit_type="standard",
+    transformation="none",
     hot_start_path="", #path to pre-trained model parameters
 )
 
@@ -42,7 +46,7 @@ model.build(
 
 model.train(
     data,
-    n_epochs=500,
+    n_epochs=4000,
     batch_size=200,
     hist_samples=100000,
 )

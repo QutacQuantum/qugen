@@ -1,8 +1,8 @@
  ## Installation
 
-1) Create a virtual environment, e.g. using ``conda create --name qugen_env python=3.9.12``. Python 3.9 or later is supported.
-2) Activate the enviroment, e.g ``source activate qugen_env``.
-3) Run ``pip install .`` or ``pip install -e .`` to install it in editable mode.
+1) Create a virtual environment, e.g. using ``conda create --name qugen python=3.9.12``. Python 3.9 or later is supported.
+2) Activate the enviroment, e.g ``source activate qugen``.
+3) Run ``pip install .`` or ``pip install -e . --use-pep517`` to install it in editable mode.
 
 
 ## Instructions for training and running models

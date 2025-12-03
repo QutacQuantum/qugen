@@ -13,6 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 from qugen.main.generator.discrete_qgan_model_handler import DiscreteQGANModelHandler
 from qugen.main.data.data_handler import load_data

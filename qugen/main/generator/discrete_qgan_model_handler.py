@@ -282,70 +282,134 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             self.generator, self.num_generator_params = get_generator(self.n_qubits, self.n_registers, self.circuit_depth)
         return self
 
-    def load_weights_from_file(
-        self, model_name: str, epoch: int, random_seed: Optional[int] = None
-    ) -> BaseModelHandler:
-        """Alternative method to load weights into a fresh DiscreteQGANModelHandler instance.
-        
-        This method allows you to instantiate a DiscreteQGANModelHandler and directly load
-        pretrained weights without calling build() first.
-        
+    def load(
+        self,
+        model_name_or_path: str,
+        epoch: Optional[int] = None,
+        random_seed: Optional[int] = None
+    ) -> 'DiscreteQGANModelHandler':
+        """Load a trained DiscreteQGAN model from a specified directory.
+
+        This method initializes the current instance with all saved model details
+        from meta.json, automatically loading the best epoch if none is specified.
+
         Args:
-            model_name (str): The name of the model to load.
-            epoch (int): The epoch/iteration to load.
-            random_seed (int, Optional): Specify a random seed for reproducibility.
-            
+            model_name_or_path (str): Either:
+                - A model directory name (will look in experiments/ directory)
+                - An absolute path to a model directory
+                - A relative path to a model directory
+            epoch (int, optional): Specific epoch to load. If None, loads the best epoch
+                                  based on lowest loss in performance_metrics.
+            random_seed (int, optional): Random seed for reproducibility.
+
         Returns:
-            BaseModelHandler: The model with loaded weights and configuration.
-            
-        Example:
-            >>> model = DiscreteQGANModelHandler()
-            >>> model.load_weights_from_file("my_model_name", epoch=500)
-            >>> samples = model.predict(1000)
+            DiscreteQGANModelHandler: The current instance, now initialized with loaded model.
+
+        Raises:
+            FileNotFoundError: If the model directory or required files don't exist.
+            ValueError: If the model configuration is invalid.
         """
-        # Set up file paths
-        self.model_name = model_name
-        self.path_to_models = "experiments/" + self.model_name
-        weights_file = f"experiments/{model_name}/parameters_training_iteration={epoch}.pickle"
-        meta_file = f"experiments/{model_name}/meta.json"
-        reverse_file = f"experiments/{model_name}/reverse_lookup.npy"
-        
-        # Load weights and metadata
-        with open(weights_file, "rb") as file:
-            self.generator_weights, self.discriminator_weights = pickle.load(file)
+
+        # Determine if this is a path or just a model name
+        if os.path.exists(model_name_or_path):
+            # It's a valid path to an existing directory
+            self.path_to_models = model_name_or_path
+            self.model_name = os.path.basename(model_name_or_path)
+        elif '/' in model_name_or_path or '\\' in model_name_or_path:
+            # It looks like a path but doesn't exist yet - try to use it anyway
+            # (will fail with clear error message below if directory doesn't exist)
+            self.path_to_models = model_name_or_path
+            self.model_name = os.path.basename(model_name_or_path)
+        else:
+            # It's just a model name, use default experiments directory
+            self.model_name = model_name_or_path
+            self.path_to_models = f"experiments/{model_name_or_path}"
+        meta_file = f"{self.path_to_models}/meta.json"
+        reverse_file = f"{self.path_to_models}/reverse_lookup.npy"
+
+        # Verify model directory exists
+        if not os.path.exists(self.path_to_models):
+            raise FileNotFoundError(f"Model directory not found: {self.path_to_models}")
+
+        # Load metadata
+        if not os.path.exists(meta_file):
+            raise FileNotFoundError(f"Metadata file not found: {meta_file}")
+
         with open(meta_file, 'r') as f:
             self.metadata = json.load(f)
-        self.reverse_lookup = jnp.load(reverse_file)
-        
-        # Initialize model parameters from metadata
+
+        # Extract core model configuration from metadata
         self.n_qubits = self.metadata["n_qubits"]
         self.n_registers = self.metadata["n_registers"]
         self.circuit_depth = self.metadata["circuit_depth"]
         self.transformation = self.metadata["transformation"]
         self.circuit_type = self.metadata["circuit_type"]
-        self.data_set_name = self.metadata.get("data_set ", "unknown")  # Note: space in key
-        self.performed_trainings = len(self.metadata["training_data"])
-        
+        self.data_set = self.metadata.get("data_set ", "").strip()  # Note: typo in original
+        self.performed_trainings = len(self.metadata.get("training_data", {}))
+
+        # Determine which epoch to load
+        if epoch is None:
+            # For QGAN, check if there are performance metrics, otherwise use the last training iteration
+            performance_metrics = self.metadata.get("performance_metrics", {})
+            if performance_metrics:
+                # Find best epoch based on lowest loss (if available)
+                best_epoch = None
+                best_loss = float('inf')
+
+                for epoch_key, metrics in performance_metrics.items():
+                    if epoch_key.startswith('epoch_'):
+                        epoch_num = int(epoch_key.replace('epoch_', ''))
+                        # Look for any loss metric (could be different names)
+                        loss = metrics.get('loss', metrics.get('generator_loss', metrics.get('discriminator_loss', float('inf'))))
+                        if loss < best_loss:
+                            best_loss = loss
+                            best_epoch = epoch_num
+
+                if best_epoch is not None:
+                    epoch = best_epoch
+                    print(f"Auto-selected best epoch {epoch} with loss: {best_loss:.6f}")
+                else:
+                    # Fallback: find the highest epoch number available
+                    epoch = self._find_latest_epoch()
+                    print(f"No performance metrics found, using latest epoch: {epoch}")
+            else:
+                # Fallback: find the highest epoch number available
+                epoch = self._find_latest_epoch()
+                print(f"No performance metrics found, using latest epoch: {epoch}")
+
+        # Load weights for the specified epoch
+        weights_file = f"{self.path_to_models}/parameters_training_iteration={epoch}.pickle"
+        if not os.path.exists(weights_file):
+            raise FileNotFoundError(f"Weights file not found: {weights_file}")
+
+        with open(weights_file, "rb") as file:
+            self.generator_weights, self.discriminator_weights = pickle.load(file)
+
+        # Load reverse lookup table
+        if os.path.exists(reverse_file):
+            self.reverse_lookup = jnp.load(reverse_file)
+        else:
+            print(f"Warning: Reverse lookup file not found: {reverse_file}")
+            self.reverse_lookup = None
+
         # Set up random key
         if random_seed is None:
-            self.random_key = jax.random.PRNGKey(42)  # Default seed
+            self.random_key = jax.random.PRNGKey(2)  # Default seed
         else:
             self.random_key = jax.random.PRNGKey(random_seed)
-        
-        # Initialize discriminator
-        self.D = Discriminator_JAX()
-        self.D.apply = jax.jit(self.D.apply)
-        
-        # Set up data normalizer
+
+        # Set up normalizer
         if self.transformation == 'minmax':
             self.normalizer = MinMaxNormalizer(epsilon=1e-6)
         elif self.transformation == 'pit':
             self.normalizer = PITNormalizer(epsilon=1e-6)
         else:
-            raise ValueError("Transformation value must be either 'minmax' or 'pit'")
-        self.normalizer.reverse_lookup = self.reverse_lookup
-        
-        # Initialize quantum generator
+            raise ValueError(f"Invalid transformation: {self.transformation}. Must be 'minmax' or 'pit'.")
+
+        if self.reverse_lookup is not None:
+            self.normalizer.reverse_lookup = self.reverse_lookup
+
+        # Create quantum circuit generator
         if self.circuit_type == 'copula':
             from qugen.main.generator.quantum_circuits.discrete_generator_pennylane import \
                 discrete_copula_circuit_JAX as get_generator
@@ -353,25 +417,58 @@ class DiscreteQGANModelHandler(BaseModelHandler):
             from qugen.main.generator.quantum_circuits.discrete_generator_pennylane import \
                 discrete_standard_circuit_JAX as get_generator
         else:
-            raise ValueError("Circuit value must be either 'standard' or 'copula'")
-        
+            raise ValueError(f"Invalid circuit type: {self.circuit_type}. Must be 'copula' or 'standard'.")
+
         self.generator, self.num_generator_params = get_generator(
             self.n_qubits, self.n_registers, self.circuit_depth
         )
-        
-        # Set other necessary attributes for compatibility
-        self.save_artifacts = False  # Default to not saving artifacts for loaded model
-        self.device = 'cpu'
-        self.beta_1 = 0.5
-        self.real_label = 1.
-        self.fake_label = 0.
-        self.n_samples = 10000
-        
-        print(f"Successfully loaded model '{model_name}' from epoch {epoch}")
+
+        # Other necessary attributes
+        self.save_artifacts = True  # Default for loaded models
+        self.slower_progress_update = False
+        self.n_epochs = None
+
+        print(f"Successfully loaded QGAN model '{self.model_name}' from epoch {epoch}")
         print(f"Model configuration: {self.n_qubits} qubits, {self.n_registers} registers, "
-              f"circuit depth {self.circuit_depth}, {self.circuit_type} circuit, {self.transformation} transformation")
-        
+              f"circuit_type='{self.circuit_type}', transformation='{self.transformation}'")
+
         return self
+
+    def _find_latest_epoch(self) -> int:
+        """Find the latest epoch number available in the model directory."""
+        import glob
+        pattern = f"{self.path_to_models}/parameters_training_iteration=*.pickle"
+        files = glob.glob(pattern)
+        if not files:
+            raise FileNotFoundError(f"No parameter files found in {self.path_to_models}")
+
+        epochs = []
+        for file in files:
+            import re
+            match = re.search(r'parameters_training_iteration=(\d+)\.pickle', file)
+            if match:
+                epochs.append(int(match.group(1)))
+
+        if not epochs:
+            raise FileNotFoundError(f"Could not parse epoch numbers from parameter files")
+
+        return max(epochs)
+
+    def load_best(self, model_name_or_path: str, random_seed: Optional[int] = None) -> 'DiscreteQGANModelHandler':
+        """Convenience method to load the best performing epoch of a trained model.
+
+        Args:
+            model_name_or_path (str): Either:
+                - A model directory name (will look in experiments/ directory)
+                - An absolute path to a model directory
+                - A relative path to a model directory
+            random_seed (int, optional): Random seed for reproducibility.
+
+        Returns:
+            DiscreteQGANModelHandler: The current instance, now initialized with the best model.
+        """
+        return self.load(model_name_or_path=model_name_or_path, epoch=None, random_seed=random_seed)
+
 
     def train(
         self,

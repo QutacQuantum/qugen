@@ -35,7 +35,7 @@ class TestDiscreteQCBMModelHandler:
         model = DiscreteQCBMModelHandler()
 
         model.build(model_name='model_name', data_set='dataset', n_qubits=8, n_registers=2, circuit_depth=1,
-                    save_artefacts=False, slower_progress_update=True)
+                    save_artifacts=False, slower_progress_update=True)
         model.model = MagicMock()
 
         # When
@@ -58,7 +58,7 @@ class TestDiscreteQCBMModelHandler:
 
         # self.train_model(train_dataset, model)
         model.build(model_name='predict_discrete', data_set='example', n_qubits=8, n_registers=2, circuit_depth=1,
-                    circuit_type='copula', transformation='pit', save_artefacts=False, slower_progress_update=True)
+                    circuit_type='copula', transformation='pit', save_artifacts=False, slower_progress_update=True)
         model.train(train_dataset=dataset,
                     n_epochs=2,
                     batch_size=2)
@@ -72,7 +72,7 @@ class TestDiscreteQCBMModelHandler:
         print("dataset", dataset)
         model = DiscreteQCBMModelHandler()
         model.build(model_name='predict_discrete', data_set='example', n_qubits=8, n_registers=2, circuit_depth=1,
-                    circuit_type='copula', transformation='pit', save_artefacts=False, slower_progress_update=True)
+                    circuit_type='copula', transformation='pit', save_artifacts=False, slower_progress_update=True)
         model.train(train_dataset=dataset,
                     n_epochs=2,
                     batch_size=2)

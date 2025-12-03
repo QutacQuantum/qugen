@@ -44,7 +44,7 @@ def get_qnode(circuit_depth, n_qubits):
         interface="jax"
     )
     dummy_weights = jnp.zeros((circuit_depth, 1, n_qubits, 3))
-    specs = qml.specs(qnode, expansion_strategy="device")(dummy_noise_inputs, dummy_weights)
+    specs = qml.specs(qnode)(dummy_noise_inputs, dummy_weights)
     # From the value specs["num_trainable_params"] calculated by pennylane, subtract the number of times the noise is
     # loaded into the circuit. It does not seem to be possible to specify to not count one of the function arguments.
     # Tested with both lambda and functools.partial, but it does not work. Therefore, manual subtraction is performed.

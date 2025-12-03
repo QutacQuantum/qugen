@@ -257,7 +257,169 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
             self.generator, self.num_params = get_generator(self.n_qubits, self.n_registers, self.circuit_depth)
         return self
 
-  
+    def load(
+        self,
+        model_name_or_path: str,
+        epoch: Optional[int] = None,
+        random_seed: Optional[int] = None
+    ) -> 'DiscreteQCBMModelHandler':
+        """Load a trained DiscreteQCBM model from a specified directory.
+
+        This method initializes the current instance with all saved model details
+        from meta.json, automatically loading the best epoch if none is specified.
+
+        Args:
+            model_name_or_path (str): Either:
+                - A model directory name (will look in experiments/ directory)
+                - An absolute path to a model directory
+                - A relative path to a model directory
+            epoch (int, optional): Specific epoch to load. If None, loads the best epoch
+                                  based on lowest KL divergence in performance_metrics.
+            random_seed (int, optional): Random seed for reproducibility.
+
+        Returns:
+            DiscreteQCBMModelHandler: The current instance, now initialized with loaded model.
+
+        Raises:
+            FileNotFoundError: If the model directory or required files don't exist.
+            ValueError: If the model configuration is invalid.
+        """
+
+        # Determine if this is a path or just a model name
+        if os.path.exists(model_name_or_path):
+            # It's a valid path to an existing directory
+            self.path_to_models = model_name_or_path
+            self.model_name = os.path.basename(model_name_or_path)
+        elif '/' in model_name_or_path or '\\' in model_name_or_path:
+            # It looks like a path but doesn't exist yet - try to use it anyway
+            # (will fail with clear error message below if directory doesn't exist)
+            self.path_to_models = model_name_or_path
+            self.model_name = os.path.basename(model_name_or_path)
+        else:
+            # It's just a model name, use default experiments directory
+            self.model_name = model_name_or_path
+            self.path_to_models = f"experiments/{model_name_or_path}"
+        meta_file = f"{self.path_to_models}/meta.json"
+        reverse_file = f"{self.path_to_models}/reverse_lookup.npy"
+
+        # Verify model directory exists
+        if not os.path.exists(self.path_to_models):
+            raise FileNotFoundError(f"Model directory not found: {self.path_to_models}")
+
+        # Load metadata
+        if not os.path.exists(meta_file):
+            raise FileNotFoundError(f"Metadata file not found: {meta_file}")
+
+        with open(meta_file, 'r') as f:
+            self.metadata = json.load(f)
+
+        # Extract core model configuration from metadata
+        self.n_qubits = self.metadata["n_qubits"]
+        self.n_registers = self.metadata["n_registers"]
+        self.circuit_depth = self.metadata["circuit_depth"]
+        self.transformation = self.metadata["transformation"]
+        self.circuit_type = self.metadata["circuit_type"]
+        self.data_set = self.metadata.get("data_set ", "").strip()  # Note: typo in original
+        self.hot_start_path = self.metadata.get("hot_start_path", "")
+        self.performed_trainings = len(self.metadata.get("training_data", {}))
+
+        # Determine which epoch to load
+        if epoch is None:
+            # Find best epoch based on lowest KL divergence
+            performance_metrics = self.metadata.get("performance_metrics", {})
+            if not performance_metrics:
+                raise ValueError(f"No performance metrics found in {meta_file}. Cannot auto-select best epoch.")
+
+            best_epoch = None
+            best_kl = float('inf')
+
+            for epoch_key, metrics in performance_metrics.items():
+                if epoch_key.startswith('epoch_'):
+                    epoch_num = int(epoch_key.replace('epoch_', ''))
+                    kl_div = metrics.get('kl_divergence_transformed', float('inf'))
+                    if kl_div < best_kl:
+                        best_kl = kl_div
+                        best_epoch = epoch_num
+
+            if best_epoch is None:
+                raise ValueError("Could not determine best epoch from performance metrics.")
+
+            epoch = best_epoch
+            print(f"Auto-selected best epoch {epoch} with KL divergence: {best_kl:.6f}")
+
+        # Load weights and sigma for the specified epoch
+        weights_file = f"{self.path_to_models}/parameters_training_iteration={epoch}.npy"
+        if not os.path.exists(weights_file):
+            raise FileNotFoundError(f"Weights file not found: {weights_file}")
+
+        self.weights, self.sigma = np.load(weights_file, allow_pickle=True)
+
+        # Load reverse lookup table
+        if os.path.exists(reverse_file):
+            self.reverse_lookup = jnp.load(reverse_file)
+        else:
+            print(f"Warning: Reverse lookup file not found: {reverse_file}")
+            self.reverse_lookup = None
+
+        # Set up random key
+        if random_seed is None:
+            self.key = jax.random.PRNGKey(2)  # Default seed
+        else:
+            self.key = jax.random.PRNGKey(random_seed)
+
+        # Create quantum circuit generator
+        if self.circuit_type == 'copula':
+            from qugen.main.generator.quantum_circuits.discrete_generator_pennylane \
+                import discrete_copula_circuit_JAX as get_generator
+        elif self.circuit_type == 'standard':
+            from qugen.main.generator.quantum_circuits.discrete_generator_pennylane \
+                import discrete_standard_circuit_JAX as get_generator
+        else:
+            raise ValueError(f"Invalid circuit type: {self.circuit_type}. Must be 'copula' or 'standard'.")
+
+        self.generator, self.num_params = get_generator(
+            self.n_qubits, self.n_registers, self.circuit_depth
+        )
+
+        # Set up histogram bins and ranges for prediction
+        n = 2 ** (self.n_qubits // self.n_registers)
+        self.all_bins = [n] * self.n_registers
+
+        if self.transformation in ['minmax', 'pit']:
+            self.all_ranges = [[0, 1]] * self.n_registers
+        else:  # transformation == 'none'
+            self.all_ranges = [None] * self.n_registers
+
+        # Other necessary attributes
+        self.save_artifacts = True  # Default for loaded models
+        self.slower_progress_update = False
+        self.hist_samples = None
+        self.batch_size = None
+        self.n_epochs = None
+        self.device = 'cpu'
+
+        print(f"Successfully loaded model '{self.model_name}' from epoch {epoch}")
+        print(f"Model configuration: {self.n_qubits} qubits, {self.n_registers} registers, "
+              f"circuit_type='{self.circuit_type}', transformation='{self.transformation}'")
+
+        return self
+
+    def load_best(self, model_name_or_path: str, random_seed: Optional[int] = None) -> 'DiscreteQCBMModelHandler':
+        """Convenience method to load the best performing epoch of a trained model.
+
+        Args:
+            model_name_or_path (str): Either:
+                - A model directory name (will look in experiments/ directory)
+                - An absolute path to a model directory
+                - A relative path to a model directory
+            random_seed (int, optional): Random seed for reproducibility.
+
+        Returns:
+            DiscreteQCBMModelHandler: The current instance, now initialized with the best model.
+        """
+        return self.load(model_name_or_path=model_name_or_path, epoch=None, random_seed=random_seed)
+
+
     def plot_training_data(self, train_dataset: np.array):
         """ Plot training data and compute an estimate of the true probability distribution """
         size = (5, 5)
@@ -513,6 +675,10 @@ class DiscreteQCBMModelHandler(BaseModelHandler):
 
     def get_circuit_qasm_string(self) -> str:
         """Generate QASM string representation of the quantum circuit with current weights.
+
+        Relies on pennylane-qiskit plugin for QASM export.
+
+        Critical Bug: Does not handle issingXX gates correctly
         
         Returns:
             str: QASM string representation of the quantum circuit.
