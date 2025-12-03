@@ -20,17 +20,17 @@ import platform
 # Base requirements (CPU versions)
 base_requirements = [
     'cma==3.2.2',
-    'colorama==0.4.5', 
+    'colorama>=0.4.6',
     'flax>=0.10.0',
     'matplotlib>=3.5.3',
     'numpy==1.26.4',
     'optax==0.2.2',
     'pandas>=1.4.3',
     'pennyLane==0.42.3',
-    'pytest==7.4.0',
+    'pytest>=8.0.0',
     'scipy>=1.13.0',
-    'setuptools==61.2.0',
-    'tqdm==4.64.1',
+    'setuptools>=70.0.0',
+    'tqdm>=4.66.0',
 ]
 
 # CPU-only JAX (default)
